@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getAuthUrl, extractTokenFromUrl, getStoredToken } from "./auth";
+import { redirectToSpotifyLogin, fetchAccessToken, getStoredToken } from "./auth";
 
 export default function App() {
   const [token, setToken] = useState(null);
@@ -7,12 +7,16 @@ export default function App() {
 
   // Token aus URL oder LocalStorage holen
   useEffect(() => {
-    let t = getStoredToken();
-    if (!t) t = extractTokenFromUrl();
-    setToken(t);
-    // URL Hash entfernen, damit sauber
-    if (window.location.hash) {
-      window.history.replaceState({}, document.title, "/");
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+
+    if (code) {
+      // Authorization Code → Access Token holen
+      fetchAccessToken(code).then(t => setToken(t));
+      window.history.replaceState({}, document.title, "/"); // Query entfernen
+    } else {
+      const t = getStoredToken();
+      if (t) setToken(t);
     }
   }, []);
 
@@ -39,7 +43,7 @@ export default function App() {
 
       {!token && (
         <button
-          onClick={() => { window.location = getAuthUrl(); }}
+          onClick={() => redirectToSpotifyLogin()}
           style={{ padding: 10, background: "#1DB954", border: "none", borderRadius: 5, color: "white" }}
         >
           Mit Spotify verbinden
