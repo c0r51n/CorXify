@@ -1,9 +1,10 @@
 {
-  "name": "My Spotify PWA",
-  "short_name": "SpotifyApp",
-  "start_url": ".",
+  "name": "CorXify",
+  "short_name": "CorXify",
+  "description": "Spotify Player PWA",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#000000",
+  "background_color": "#121212",
   "theme_color": "#1DB954",
   "icons": [
     {
