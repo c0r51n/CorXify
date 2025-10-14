@@ -5,47 +5,28 @@ import { getCurrentPlayback, play, pause, nextTrack, previousTrack } from "./spo
 function App() {
   const [track, setTrack] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [error, setError] = useState(null);
 
   // Code aus URL abholen
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
 
-    async function init() {
-      if (!getAccessToken() && code) {
-        await fetchAccessToken(code);
+    if (!getAccessToken() && code) {
+      fetchAccessToken(code).then(() => {
         window.history.replaceState({}, document.title, "/");
-      }
-      if (getAccessToken()) {
-        await loadCurrentTrack();
-        startPolling();
-      }
-    }
-
-    init();
-
-    // Clean up bei Unmount
-    return () => stopPolling();
-  }, []);
-
-  // Polling für Song-Änderungen
-  let pollInterval = null;
-
-  function startPolling() {
-    if (!pollInterval) {
-      pollInterval = setInterval(() => {
         loadCurrentTrack();
-      }, 5000); // alle 5 Sekunden
+      });
+    } else if (getAccessToken()) {
+      loadCurrentTrack();
     }
-  }
 
-  function stopPolling() {
-    if (pollInterval) {
-      clearInterval(pollInterval);
-      pollInterval = null;
-    }
-  }
+    // 🔁 Songtitel & Cover alle 5 Sekunden aktualisieren
+    const interval = setInterval(() => {
+      if (getAccessToken()) loadCurrentTrack();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   async function loadCurrentTrack() {
     try {
@@ -53,13 +34,9 @@ function App() {
       if (data && data.item) {
         setTrack(data.item);
         setIsPlaying(!!data.is_playing);
-        setError(null);
-      } else {
-        setTrack(null);
       }
     } catch (err) {
-      console.error(err);
-      setError("Keine aktive Wiedergabe gefunden.");
+      console.error("Fehler beim Laden:", err);
     }
   }
 
@@ -69,85 +46,57 @@ function App() {
         await pause();
         setIsPlaying(false);
       } else {
+        // 🩵 Wenn kein aktives Device mehr aktiv ist, Play-Request wiederholen
         await play();
+        setTimeout(loadCurrentTrack, 1500);
         setIsPlaying(true);
       }
     } catch (err) {
-      console.error(err);
-      setError("Fehler bei Wiedergabe – bitte Spotify-App öffnen.");
+      console.error("Fehler beim Play/Pause:", err);
     }
   }
 
   async function handleNext() {
     try {
       await nextTrack();
-      await loadCurrentTrack();
+      setTimeout(loadCurrentTrack, 1000); // nach Skip neu laden
     } catch (err) {
-      console.error(err);
-      setError("Nächstes Lied nicht möglich (kein aktives Gerät?).");
+      console.error("Fehler beim Nächsten:", err);
     }
   }
 
   async function handlePrevious() {
     try {
       await previousTrack();
-      await loadCurrentTrack();
+      setTimeout(loadCurrentTrack, 1000); // nach Skip neu laden
     } catch (err) {
-      console.error(err);
-      setError("Vorheriges Lied nicht möglich (kein aktives Gerät?).");
+      console.error("Fehler beim Vorherigen:", err);
     }
   }
 
   return (
-    <div
-      style={{
-        padding: 20,
-        fontFamily: "sans-serif",
-        color: "#fff",
-        background: "#121212",
-        minHeight: "100vh",
-        textAlign: "center",
-      }}
-    >
+    <div style={{ padding: 20, fontFamily: "sans-serif", color: "#fff", background: "#121212", minHeight: "100vh" }}>
       <h1>CorXify</h1>
-
       {!getAccessToken() ? (
         <button onClick={async () => (window.location.href = await getAuthorizationUrl())}>
           Mit Spotify verbinden
         </button>
       ) : (
         <>
-          {error && <p style={{ color: "red" }}>{error}</p>}
           {track ? (
             <div>
-              <img
-                src={track.album.images[0].url}
-                alt="cover"
-                width={200}
-                style={{ borderRadius: "12px", marginBottom: "10px" }}
-              />
+              <img src={track.album.images[0].url} alt="cover" width={200} />
               <h2>{track.name}</h2>
               <p>{track.artists.map((a) => a.name).join(", ")}</p>
-              <div style={{ display: "flex", justifyContent: "center", gap: "10px", marginTop: "15px" }}>
-                <button onClick={handlePrevious}>⏮️</button>
-                <button onClick={handlePlayPause}>{isPlaying ? "⏸️" : "▶️"}</button>
-                <button onClick={handleNext}>⏭️</button>
-              </div>
+              <button onClick={handlePrevious}>⏮️</button>
+              <button onClick={handlePlayPause}>{isPlaying ? "⏸️" : "▶️"}</button>
+              <button onClick={handleNext}>⏭️</button>
             </div>
           ) : (
             <p>Keine Wiedergabe gefunden.</p>
           )}
           <button
-            style={{
-              position: "absolute",
-              top: 20,
-              right: 20,
-              background: "#1DB954",
-              border: "none",
-              borderRadius: "8px",
-              padding: "8px 12px",
-              cursor: "pointer",
-            }}
+            style={{ position: "absolute", top: 20, right: 20 }}
             onClick={() => {
               logout();
               window.location.reload();
