@@ -26,20 +26,27 @@ function App() {
       const data = await getCurrentPlayback();
       if (data && data.item) {
         setTrack(data.item);
-        setIsPlaying(!data.is_playing ? false : true);
+        setIsPlaying(!!data.is_playing);
       }
     } catch (err) {
       console.error(err);
     }
   }
 
+  // ✅ FIXED VERSION
   async function handlePlayPause() {
     try {
-      if (isPlaying) await pause();
-      else await play();
-      setIsPlaying(!isPlaying);
+      setIsPlaying((prev) => {
+        if (prev) {
+          pause();
+          return false;
+        } else {
+          play().then(() => setTimeout(loadCurrentTrack, 800));
+          return true;
+        }
+      });
     } catch (err) {
-      console.error(err);
+      console.error("Fehler bei Play/Pause:", err);
     }
   }
 
@@ -47,14 +54,16 @@ function App() {
     <div style={{ padding: 20, fontFamily: "sans-serif", color: "#fff", background: "#121212", minHeight: "100vh" }}>
       <h1>CorXify</h1>
       {!getAccessToken() ? (
-        <button onClick={async () => window.location.href = await getAuthorizationUrl()}>Mit Spotify verbinden</button>
+        <button onClick={async () => (window.location.href = await getAuthorizationUrl())}>
+          Mit Spotify verbinden
+        </button>
       ) : (
         <>
           {track ? (
             <div>
               <img src={track.album.images[0].url} alt="cover" width={200} />
               <h2>{track.name}</h2>
-              <p>{track.artists.map(a => a.name).join(", ")}</p>
+              <p>{track.artists.map((a) => a.name).join(", ")}</p>
               <button onClick={previousTrack}>⏮️</button>
               <button onClick={handlePlayPause}>{isPlaying ? "⏸️" : "▶️"}</button>
               <button onClick={nextTrack}>⏭️</button>
@@ -62,7 +71,15 @@ function App() {
           ) : (
             <p>Keine Wiedergabe gefunden.</p>
           )}
-          <button style={{ position: "absolute", top: 20, right: 20 }} onClick={() => { logout(); window.location.reload(); }}>Neu verbinden</button>
+          <button
+            style={{ position: "absolute", top: 20, right: 20 }}
+            onClick={() => {
+              logout();
+              window.location.reload();
+            }}
+          >
+            Neu verbinden
+          </button>
         </>
       )}
     </div>
