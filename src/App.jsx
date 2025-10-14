@@ -19,13 +19,6 @@ function App() {
     } else if (getAccessToken()) {
       loadCurrentTrack();
     }
-
-    // 🔁 Songtitel & Cover alle 5 Sekunden aktualisieren
-    const interval = setInterval(() => {
-      if (getAccessToken()) loadCurrentTrack();
-    }, 5000);
-
-    return () => clearInterval(interval);
   }, []);
 
   async function loadCurrentTrack() {
@@ -33,44 +26,20 @@ function App() {
       const data = await getCurrentPlayback();
       if (data && data.item) {
         setTrack(data.item);
-        setIsPlaying(!!data.is_playing);
+        setIsPlaying(!data.is_playing ? false : true);
       }
     } catch (err) {
-      console.error("Fehler beim Laden:", err);
+      console.error(err);
     }
   }
 
   async function handlePlayPause() {
     try {
-      if (isPlaying) {
-        await pause();
-        setIsPlaying(false);
-      } else {
-        // 🩵 Wenn kein aktives Device mehr aktiv ist, Play-Request wiederholen
-        await play();
-        setTimeout(loadCurrentTrack, 1500);
-        setIsPlaying(true);
-      }
+      if (isPlaying) await pause();
+      else await play();
+      setIsPlaying(!isPlaying);
     } catch (err) {
-      console.error("Fehler beim Play/Pause:", err);
-    }
-  }
-
-  async function handleNext() {
-    try {
-      await nextTrack();
-      setTimeout(loadCurrentTrack, 1000); // nach Skip neu laden
-    } catch (err) {
-      console.error("Fehler beim Nächsten:", err);
-    }
-  }
-
-  async function handlePrevious() {
-    try {
-      await previousTrack();
-      setTimeout(loadCurrentTrack, 1000); // nach Skip neu laden
-    } catch (err) {
-      console.error("Fehler beim Vorherigen:", err);
+      console.error(err);
     }
   }
 
@@ -78,32 +47,22 @@ function App() {
     <div style={{ padding: 20, fontFamily: "sans-serif", color: "#fff", background: "#121212", minHeight: "100vh" }}>
       <h1>CorXify</h1>
       {!getAccessToken() ? (
-        <button onClick={async () => (window.location.href = await getAuthorizationUrl())}>
-          Mit Spotify verbinden
-        </button>
+        <button onClick={async () => window.location.href = await getAuthorizationUrl()}>Mit Spotify verbinden</button>
       ) : (
         <>
           {track ? (
             <div>
               <img src={track.album.images[0].url} alt="cover" width={200} />
               <h2>{track.name}</h2>
-              <p>{track.artists.map((a) => a.name).join(", ")}</p>
-              <button onClick={handlePrevious}>⏮️</button>
+              <p>{track.artists.map(a => a.name).join(", ")}</p>
+              <button onClick={previousTrack}>⏮️</button>
               <button onClick={handlePlayPause}>{isPlaying ? "⏸️" : "▶️"}</button>
-              <button onClick={handleNext}>⏭️</button>
+              <button onClick={nextTrack}>⏭️</button>
             </div>
           ) : (
             <p>Keine Wiedergabe gefunden.</p>
           )}
-          <button
-            style={{ position: "absolute", top: 20, right: 20 }}
-            onClick={() => {
-              logout();
-              window.location.reload();
-            }}
-          >
-            Neu verbinden
-          </button>
+          <button style={{ position: "absolute", top: 20, right: 20 }} onClick={() => { logout(); window.location.reload(); }}>Neu verbinden</button>
         </>
       )}
     </div>
