@@ -19,6 +19,13 @@ function App() {
     } else if (getAccessToken()) {
       loadCurrentTrack();
     }
+
+    // 🔁 Songtitel & Cover alle 5 Sekunden aktualisieren
+    const interval = setInterval(() => {
+      if (getAccessToken()) loadCurrentTrack();
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, []);
 
   async function loadCurrentTrack() {
@@ -29,24 +36,41 @@ function App() {
         setIsPlaying(!!data.is_playing);
       }
     } catch (err) {
-      console.error(err);
+      console.error("Fehler beim Laden:", err);
     }
   }
 
-  // ✅ FIXED VERSION
   async function handlePlayPause() {
     try {
-      setIsPlaying((prev) => {
-        if (prev) {
-          pause();
-          return false;
-        } else {
-          play().then(() => setTimeout(loadCurrentTrack, 800));
-          return true;
-        }
-      });
+      if (isPlaying) {
+        await pause();
+        setIsPlaying(false);
+      } else {
+        // 🩵 Wenn kein aktives Device mehr aktiv ist, Play-Request wiederholen
+        await play();
+        setTimeout(loadCurrentTrack, 1500);
+        setIsPlaying(true);
+      }
     } catch (err) {
-      console.error("Fehler bei Play/Pause:", err);
+      console.error("Fehler beim Play/Pause:", err);
+    }
+  }
+
+  async function handleNext() {
+    try {
+      await nextTrack();
+      setTimeout(loadCurrentTrack, 1000); // nach Skip neu laden
+    } catch (err) {
+      console.error("Fehler beim Nächsten:", err);
+    }
+  }
+
+  async function handlePrevious() {
+    try {
+      await previousTrack();
+      setTimeout(loadCurrentTrack, 1000); // nach Skip neu laden
+    } catch (err) {
+      console.error("Fehler beim Vorherigen:", err);
     }
   }
 
@@ -64,9 +88,9 @@ function App() {
               <img src={track.album.images[0].url} alt="cover" width={200} />
               <h2>{track.name}</h2>
               <p>{track.artists.map((a) => a.name).join(", ")}</p>
-              <button onClick={previousTrack}>⏮️</button>
+              <button onClick={handlePrevious}>⏮️</button>
               <button onClick={handlePlayPause}>{isPlaying ? "⏸️" : "▶️"}</button>
-              <button onClick={nextTrack}>⏭️</button>
+              <button onClick={handleNext}>⏭️</button>
             </div>
           ) : (
             <p>Keine Wiedergabe gefunden.</p>
