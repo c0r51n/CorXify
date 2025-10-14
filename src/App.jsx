@@ -34,21 +34,24 @@ function App() {
   }
 
   // ✅ FIXED VERSION
-  async function handlePlayPause() {
-    try {
-      setIsPlaying((prev) => {
-        if (prev) {
-          pause();
-          return false;
-        } else {
-          play().then(() => setTimeout(loadCurrentTrack, 800));
-          return true;
-        }
-      });
-    } catch (err) {
-      console.error("Fehler bei Play/Pause:", err);
+async function handlePlayPause() {
+  try {
+    if (isPlaying) {
+      await pause();
+      setIsPlaying(false);
+    } else {
+      await play();
+      // Spotify braucht kurz, um wieder Daten zu liefern
+      setTimeout(() => {
+        loadCurrentTrack();
+      }, 1000);
+      setIsPlaying(true);
     }
+  } catch (err) {
+    console.error(err);
   }
+}
+
 
   return (
     <div style={{ padding: 20, fontFamily: "sans-serif", color: "#fff", background: "#121212", minHeight: "100vh" }}>
