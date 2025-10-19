@@ -1,0 +1,17 @@
+{
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  },
+  "functions": {
+    "api/**.js": {
+      "maxDuration": 10
+    }
+  },
+  "git": {
+    "deploymentEnabled": true
+  },
+  "crons": [],
+  "ignoreCommand": "rm -rf .vercel/output && rm -rf node_modules && npm install && echo 'Cache cleared!'"
+}
