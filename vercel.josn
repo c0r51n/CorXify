@@ -1,0 +1,8 @@
+{
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  },
+  "ignoreCommand": "rm -rf .vercel/output && rm -rf node_modules && npm install && echo 'Cache cleared!'"
+}
