@@ -26,47 +26,35 @@ function App() {
       const data = await getCurrentPlayback();
       if (data && data.item) {
         setTrack(data.item);
-        setIsPlaying(!!data.is_playing);
+        setIsPlaying(!data.is_playing ? false : true);
       }
     } catch (err) {
       console.error(err);
     }
   }
 
-  // ✅ FIXED VERSION
-async function handlePlayPause() {
-  try {
-    if (isPlaying) {
-      await pause();
-      setIsPlaying(false);
-    } else {
-      await play();
-      // Spotify braucht kurz, um wieder Daten zu liefern
-      setTimeout(() => {
-        loadCurrentTrack();
-      }, 1000);
-      setIsPlaying(true);
+  async function handlePlayPause() {
+    try {
+      if (isPlaying) await pause();
+      else await play();
+      setIsPlaying(!isPlaying);
+    } catch (err) {
+      console.error(err);
     }
-  } catch (err) {
-    console.error(err);
   }
-}
-
 
   return (
     <div style={{ padding: 20, fontFamily: "sans-serif", color: "#fff", background: "#121212", minHeight: "100vh" }}>
       <h1>CorXify</h1>
       {!getAccessToken() ? (
-        <button onClick={async () => (window.location.href = await getAuthorizationUrl())}>
-          Mit Spotify verbinden
-        </button>
+        <button onClick={async () => window.location.href = await getAuthorizationUrl()}>Mit Spotify verbinden</button>
       ) : (
         <>
           {track ? (
             <div>
               <img src={track.album.images[0].url} alt="cover" width={200} />
               <h2>{track.name}</h2>
-              <p>{track.artists.map((a) => a.name).join(", ")}</p>
+              <p>{track.artists.map(a => a.name).join(", ")}</p>
               <button onClick={previousTrack}>⏮️</button>
               <button onClick={handlePlayPause}>{isPlaying ? "⏸️" : "▶️"}</button>
               <button onClick={nextTrack}>⏭️</button>
@@ -74,15 +62,7 @@ async function handlePlayPause() {
           ) : (
             <p>Keine Wiedergabe gefunden.</p>
           )}
-          <button
-            style={{ position: "absolute", top: 20, right: 20 }}
-            onClick={() => {
-              logout();
-              window.location.reload();
-            }}
-          >
-            Neu verbinden
-          </button>
+          <button style={{ position: "absolute", top: 20, right: 20 }} onClick={() => { logout(); window.location.reload(); }}>Neu verbinden</button>
         </>
       )}
     </div>
