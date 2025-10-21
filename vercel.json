@@ -1,0 +1,8 @@
+{
+  "buildCommand": "rm -rf .vercel/output node_modules dist && npm install && npm run build",
+  "outputDirectory": "dist",
+  "ignoreCommand": "echo 'no cache reuse'",
+  "env": {
+    "NODE_ENV": "production"
+  }
+}
