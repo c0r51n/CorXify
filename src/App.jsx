@@ -20,7 +20,7 @@ function App() {
     }
 
     // 🔁 Automatische Aktualisierung alle 5 Sekunden
-    const interval = setInterval(loadCurrentTrack, 5000);
+    const interval = setInterval(loadCurrentTrack, 1000);
     return () => clearInterval(interval);
   }, []);
 
