@@ -19,8 +19,8 @@ function App() {
       loadCurrentTrack();
     }
 
-    // 🔁 Automatische Aktualisierung alle 5 Sekunden
-    const interval = setInterval(loadCurrentTrack, 1000);
+    // 🔁 Automatische Aktualisierung alle 0.1 Sekunden
+    const interval = setInterval(loadCurrentTrack, 100);
     return () => clearInterval(interval);
   }, []);
 
@@ -84,7 +84,7 @@ function App() {
               <h2>{track.name}</h2>
               <p>{track.artists.map((a) => a.name).join(", ")}</p>
               <button onClick={handlePrevious}>⏮️</button>
-              <button onClick={handlePlayPause}>{isPlaying ? "⏸️" : "▶️"}</button>
+              <button onClick={handlePlayPause}>{isPlaying ? "⏸️" : "⚠️▶️"}</button>
               <button onClick={handleNext}>⏭️</button>
             </div>
           ) : (
