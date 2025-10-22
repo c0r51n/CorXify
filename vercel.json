@@ -3,7 +3,6 @@
     "env": {
       "NODE_ENV": "production"
     },
-    "builder": "@vercel/node",
     "buildCommand": "rm -rf node_modules .vercel/output dist && npm ci && npm run build"
   },
   "functions": {
