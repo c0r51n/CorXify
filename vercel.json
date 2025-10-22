@@ -12,5 +12,4 @@
   "git": {
     "deploymentEnabled": true
   },
-  "ignoreCommand": "rm -rf node_modules .vercel/output dist && npm install && echo 'Cache cleared!'"
-}
+
