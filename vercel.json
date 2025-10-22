@@ -1,10 +1,4 @@
 {
-  "build": {
-    "env": {
-      "NODE_ENV": "production"
-    },
-    "buildCommand": "rm -rf node_modules .vercel/output dist && npm ci && npm run build"
-  },
   "functions": {
     "api/**.js": {
       "maxDuration": 10
