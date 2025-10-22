@@ -84,7 +84,7 @@ function App() {
               <h2>{track.name}</h2>
               <p>{track.artists.map((a) => a.name).join(", ")}</p>
               <button onClick={handlePrevious}>⏮️</button>
-              <button onClick={handlePlayPause}>{isPlaying ? "⏸️" : "❎▶️"}</button>
+              <button onClick={handlePlayPause}>{isPlaying ? "⏸️" : "❌▶️"}</button>
               <button onClick={handleNext}>⏭️</button>
             </div>
           ) : (
