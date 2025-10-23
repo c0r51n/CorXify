@@ -1,4 +1,4 @@
-const CACHE_NAME = "cor-xifyz-v2-" + Date.now(); // neue Version pro Build
+const CACHE_NAME = "cor-xify-v2-" + Date.now(); // neue Version pro Build
 const urlsToCache = ["/", "/index.html", "/manifest.json"];
 
 self.addEventListener("install", (event) => {
