@@ -1,4 +1,4 @@
-const CACHE_NAME = "cor-xify-cache-" + (self.VERCEL_GIT_COMMIT_SHA || Date.now());
+const CACHE_NAME = "cor-xify-cache-" + import.meta.env.VITE_CACHE_BUST;
 const urlsToCache = ["/", "/index.html", "/manifest.json"];
 
 self.addEventListener("install", (event) => {
