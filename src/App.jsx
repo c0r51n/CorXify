@@ -21,7 +21,7 @@ import {
   SkipBack,
   SkipForward,
   Heart,
-} from "lucide-react"; // ✅ Lucide Icons
+} from "lucide-react";
 
 function App() {
   const [track, setTrack] = useState(null);
@@ -128,170 +128,194 @@ function App() {
         background: "linear-gradient(180deg, #3a3d62 0%, #000000 100%)",
         minHeight: "100vh",
         width: "100vw",
-        boxSizing: "border-box",
+        overflow: "hidden",
+        position: "relative",
         display: "flex",
-        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
       }}
     >
-      {!getAccessToken() ? (
-        <button
-          onClick={async () =>
-            (window.location.href = await getAuthorizationUrl())
-          }
+      {/* 🔥 Verschwommener Hintergrund */}
+      {track && (
+        <div
           style={{
-            background: "#1db954",
-            color: "#fff",
-            border: "none",
-            borderRadius: 50,
-            padding: "10px 20px",
-            fontSize: "1em",
-            cursor: "pointer",
+            backgroundImage: `url(${track.album.images[0].url})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            filter: "blur(50px)",
+            transform: "scale(1.5)",
+            opacity: 0.3,
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            zIndex: 0,
           }}
-        >
-          Mit Spotify verbinden
-        </button>
-      ) : track ? (
-        <div style={{ textAlign: "center" }}>
-          <img
-            src={track.album.images[0].url}
-            alt="cover"
-            width={320} // 🔼 größer gemacht
-            style={{
-              borderRadius: 20,
-              boxShadow: "0 0 25px rgba(0,0,0,0.5)",
-            }}
-          />
-          <h2 style={{ marginTop: 20 }}>{track.name}</h2>
-          <p style={{ opacity: 0.8 }}>{track.artists.map((a) => a.name).join(", ")}</p>
+        />
+      )}
 
-          {/* Progress bar */}
-          <div style={{ width: "90%", margin: "15px auto" }}> {/* 🔼 Breiter */}
-            <input
-              type="range"
-              value={progressMs}
-              max={track.duration_ms}
-              onChange={handleSeek}
-              style={{
-                width: "100%",
-                height: 6, // 🔽 Dünner gemacht
-                borderRadius: 5,
-                appearance: "none",
-                background: "#333",
-                cursor: "pointer",
-              }}
-            />
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                fontSize: "0.9em",
-                opacity: 0.8,
-              }}
-            >
-              <span>{formatTime(progressMs)}</span>
-              <span>{formatTime(track.duration_ms)}</span>
-            </div>
-          </div>
-
-          {/* Buttons */}
-          <div
+      <div style={{ position: "relative", zIndex: 1 }}>
+        {!getAccessToken() ? (
+          <button
+            onClick={async () =>
+              (window.location.href = await getAuthorizationUrl())
+            }
             style={{
-              marginTop: 25,
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              gap: 50, // 🔼 Mehr Abstand
+              background: "#1db954",
+              color: "#fff",
+              border: "none",
+              borderRadius: 50,
+              padding: "10px 20px",
+              fontSize: "1em",
+              cursor: "pointer",
             }}
           >
-            <button
-              onClick={previousTrack}
+            Mit Spotify verbinden
+          </button>
+        ) : track ? (
+          <div style={{ textAlign: "center" }}>
+            {/* 🎵 Cover wieder kleiner */}
+            <img
+              src={track.album.images[0].url}
+              alt="cover"
+              width={260}
               style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                color: "white",
+                borderRadius: 20,
+                boxShadow: "0 0 25px rgba(0,0,0,0.5)",
               }}
-            >
-              <SkipBack size={36} />
-            </button>
+            />
+            <h2 style={{ marginTop: 20 }}>{track.name}</h2>
+            <p style={{ opacity: 0.8 }}>{track.artists.map((a) => a.name).join(", ")}</p>
 
-            <button
-              onClick={handlePlayPause}
+            {/* 🎚 Fortschrittsbalken (weiß & rund) */}
+            <div style={{ width: "90%", margin: "15px auto" }}>
+              <input
+                type="range"
+                value={progressMs}
+                max={track.duration_ms}
+                onChange={handleSeek}
+                style={{
+                  width: "100%",
+                  height: 6,
+                  borderRadius: 10,
+                  appearance: "none",
+                  background: "white",
+                  cursor: "pointer",
+                }}
+              />
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontSize: "0.9em",
+                  opacity: 0.8,
+                }}
+              >
+                <span>{formatTime(progressMs)}</span>
+                <span>{formatTime(track.duration_ms)}</span>
+              </div>
+            </div>
+
+            {/* 🎛 Buttons */}
+            <div
               style={{
-                background: "white",
-                border: "none",
-                borderRadius: "50%",
-                width: 90,
-                height: 90,
-                color: "black",
+                marginTop: 25,
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                cursor: "pointer",
-                boxShadow: "0 0 25px rgba(0,0,0,0.5)",
+                gap: 50,
               }}
             >
-              {isPlaying ? <Pause size={44} /> : <Play size={44} />}
-            </button>
+              <button
+                onClick={previousTrack}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "white",
+                }}
+              >
+                <SkipBack size={36} />
+              </button>
 
+              <button
+                onClick={handlePlayPause}
+                style={{
+                  background: "white",
+                  border: "none",
+                  borderRadius: "50%",
+                  width: 90,
+                  height: 90,
+                  color: "black",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  cursor: "pointer",
+                  boxShadow: "0 0 25px rgba(0,0,0,0.5)",
+                }}
+              >
+                {isPlaying ? <Pause size={44} /> : <Play size={44} />}
+              </button>
+
+              <button
+                onClick={nextTrack}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "white",
+                }}
+              >
+                <SkipForward size={36} />
+              </button>
+            </div>
+
+            {/* ❤️ Like */}
+            <div style={{ marginTop: 20 }}>
+              <button
+                onClick={handleLike}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "1.8em",
+                  color: isLiked ? "red" : "white",
+                }}
+              >
+                <Heart
+                  fill={isLiked ? "red" : "none"}
+                  color={isLiked ? "red" : "white"}
+                  size={36}
+                />
+              </button>
+            </div>
+
+            {/* 🔄 Logout */}
             <button
-              onClick={nextTrack}
               style={{
-                background: "none",
+                position: "absolute",
+                top: 20,
+                right: 20,
+                background: "rgba(255,255,255,0.1)",
+                color: "#fff",
                 border: "none",
+                borderRadius: 20,
+                padding: "6px 12px",
                 cursor: "pointer",
-                color: "white",
+              }}
+              onClick={() => {
+                logout();
+                window.location.reload();
               }}
             >
-              <SkipForward size={36} />
+              Neu verbinden
             </button>
           </div>
-
-          {/* Herz-Button */}
-          <div style={{ marginTop: 20 }}>
-            <button
-              onClick={handleLike}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                fontSize: "1.8em",
-                color: isLiked ? "red" : "white",
-              }}
-            >
-              <Heart
-                fill={isLiked ? "red" : "none"}
-                color={isLiked ? "red" : "white"}
-                size={36}
-              />
-            </button>
-          </div>
-
-          <button
-            style={{
-              position: "absolute",
-              top: 20,
-              right: 20,
-              background: "rgba(255,255,255,0.1)",
-              color: "#fff",
-              border: "none",
-              borderRadius: 20,
-              padding: "6px 12px",
-              cursor: "pointer",
-            }}
-            onClick={() => {
-              logout();
-              window.location.reload();
-            }}
-          >
-            Neu verbinden
-          </button>
-        </div>
-      ) : (
-        <p>Keine Wiedergabe gefunden.</p>
-      )}
+        ) : (
+          <p>Keine Wiedergabe gefunden.</p>
+        )}
+      </div>
     </div>
   );
 }
