@@ -308,7 +308,7 @@ function App() {
             </div>
           </>
         ) : (
-          <p>Keine Wiedergabe gefunden.</p>
+          <p>--</p>
         )}
 
         {/* Drei-Punkte Menü */}
