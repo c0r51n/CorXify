@@ -16,6 +16,8 @@ import {
   removeTrack
 } from "./spotify";
 
+import { Play, Pause, SkipBack, SkipForward, Heart } from "lucide-react";
+
 function App() {
   const [playback, setPlayback] = useState({
     track: null,
@@ -26,8 +28,8 @@ function App() {
 
   const [isSeeking, setIsSeeking] = useState(false);
   const [seekPosition, setSeekPosition] = useState(0);
+  const [heartPulse, setHeartPulse] = useState(false);
 
-  // Login + Track laden
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
@@ -78,6 +80,7 @@ function App() {
   async function handleLike() {
     if (!playback.track) return;
     try {
+      setHeartPulse(true);
       if (playback.isLiked) {
         await removeTrack(playback.track.id);
         setPlayback(prev => ({ ...prev, isLiked: false }));
@@ -89,9 +92,11 @@ function App() {
       setTimeout(async () => {
         const saved = await checkIfTrackIsSaved(playback.track.id);
         setPlayback(prev => ({ ...prev, isLiked: saved }));
-      }, 3500);
+        setHeartPulse(false);
+      }, 1000);
     } catch (err) {
       console.error("Fehler beim Liken:", err);
+      setHeartPulse(false);
     }
   }
 
@@ -143,6 +148,15 @@ function App() {
           onClick={async () =>
             (window.location.href = await getAuthorizationUrl())
           }
+          style={{
+            padding: "10px 20px",
+            fontSize: 16,
+            borderRadius: 8,
+            cursor: "pointer",
+            background: "#1DB954",
+            color: "#fff",
+            border: "none"
+          }}
         >
           Mit Spotify verbinden
         </button>
@@ -159,7 +173,7 @@ function App() {
               <h2>{playback.track.name}</h2>
               <p>{playback.track.artists.map(a => a.name).join(", ")}</p>
 
-              {/* Progress + Spulen */}
+              {/* Progress + Slider */}
               <div style={{ width: "80%", margin: "10px auto" }}>
                 <input
                   type="range"
@@ -192,13 +206,51 @@ function App() {
                 </div>
               </div>
 
-              {/* Steuerung */}
-              <div style={{ marginTop: 10 }}>
-                <button onClick={previousTrack}>⏮️</button>
-                <button onClick={handlePlayPause}>
-                  {playback.isPlaying ? "⏸️" : "▶️"}
+              {/* Steuerungsbuttons */}
+              <div
+                style={{
+                  marginTop: 10,
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: 20
+                }}
+              >
+                <button
+                  onClick={previousTrack}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer"
+                  }}
+                >
+                  <SkipBack size={32} />
                 </button>
-                <button onClick={nextTrack}>⏭️</button>
+
+                <button
+                  onClick={handlePlayPause}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer"
+                  }}
+                >
+                  {playback.isPlaying ? (
+                    <Pause size={36} />
+                  ) : (
+                    <Play size={36} />
+                  )}
+                </button>
+
+                <button
+                  onClick={nextTrack}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer"
+                  }}
+                >
+                  <SkipForward size={32} />
+                </button>
               </div>
 
               {/* Herz */}
@@ -209,20 +261,33 @@ function App() {
                     background: "none",
                     border: "none",
                     cursor: "pointer",
-                    fontSize: "1.8em",
-                    color: playback.isLiked ? "red" : "white"
+                    fontSize: 32,
+                    color: playback.isLiked ? "red" : "white",
+                    transform: heartPulse ? "scale(1.3)" : "scale(1)",
+                    transition: "transform 0.3s"
                   }}
                 >
-                  {playback.isLiked ? "❤️" : "🤍"}
+                  <Heart size={32} />
                 </button>
               </div>
             </div>
           ) : (
             <p>Keine Wiedergabe gefunden.</p>
           )}
-          
+
+          {/* Neu verbinden */}
           <button
-            style={{ position: "absolute", top: 20, right: 20 }}
+            style={{
+              position: "absolute",
+              top: 20,
+              right: 20,
+              padding: "6px 12px",
+              borderRadius: 6,
+              cursor: "pointer",
+              background: "#1DB954",
+              color: "#fff",
+              border: "none"
+            }}
             onClick={() => {
               logout();
               window.location.reload();
