@@ -101,7 +101,7 @@ function App() {
         padding: 0,
         fontFamily: "sans-serif",
         color: "#fff",
-        background: "linear-gradient(180deg, #1d1c3b 0%, #372758 100%)",
+        background: "linear-gradient(180deg, #0d0c1cff 50%, #372758 100%)",
         minHeight: "100vh",
         width: "100vw",
         boxSizing: "border-box",
