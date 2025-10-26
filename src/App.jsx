@@ -220,23 +220,7 @@ function App() {
           ) : (
             <p>Keine Wiedergabe gefunden.</p>
           )}
-
-          {/* Debug nur zum Kontrollieren */}
-          {playback.track && (
-            <pre
-              style={{
-                textAlign: "left",
-                fontSize: "0.7em",
-                background: "#222",
-                padding: "10px",
-                overflowX: "auto",
-                marginTop: 20
-              }}
-            >
-              {JSON.stringify(playback, null, 2)}
-            </pre>
-          )}
-
+          
           <button
             style={{ position: "absolute", top: 20, right: 20 }}
             onClick={() => {
