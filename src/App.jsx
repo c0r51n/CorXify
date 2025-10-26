@@ -169,7 +169,15 @@ function App() {
                   onMouseDown={handleSeekStart}
                   onChange={handleSeekChange}
                   onMouseUp={handleSeekEnd}
-                  style={{ width: "100%", cursor: "pointer" }}
+                  onTouchStart={handleSeekStart}
+                  onTouchMove={handleSeekChange}
+                  onTouchEnd={handleSeekEnd}
+                  style={{
+    width: "100%",
+    cursor: "pointer",
+    accentColor: "#1DB954", // Spotify-Grün
+    touchAction: "none", // verhindert versehentliches Scrollen beim Spulen
+  }}
                 />
                 <div
                   style={{
