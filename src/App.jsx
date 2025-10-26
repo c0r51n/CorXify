@@ -23,7 +23,7 @@ function App() {
 
     const interval = setInterval(() => {
       if (getAccessToken()) loadCurrentTrack();
-    }, 100);
+    }, 1000);
 
     return () => clearInterval(interval);
   }, []);
@@ -54,19 +54,25 @@ function App() {
   }
 
   async function handleLike() {
-    if (!track) return;
-    try {
-      if (isLiked) {
-        await removeTrack(track.id);
-        setIsLiked(false);
-      } else {
-        await saveTrack(track.id);
-        setIsLiked(true);
-      }
-    } catch (err) {
-      console.error(err);
+  if (!track) return;
+  try {
+    if (isLiked) {
+      await removeTrack(track.id);
+      setIsLiked(false);
+    } else {
+      await saveTrack(track.id);
+      setIsLiked(true);
     }
+
+    // 🕓 kurze Pause, damit Spotify den Status wirklich übernimmt
+    setTimeout(async () => {
+      const saved = await checkIfTrackIsSaved(track.id);
+      setIsLiked(saved);
+    }, 1500);
+  } catch (err) {
+    console.error("Fehler beim Liken:", err);
   }
+}
 
   function formatTime(ms) {
     const totalSec = Math.floor(ms / 1000);
