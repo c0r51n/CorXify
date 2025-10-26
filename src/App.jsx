@@ -68,7 +68,7 @@ function App() {
     setTimeout(async () => {
       const saved = await checkIfTrackIsSaved(track.id);
       setIsLiked(saved);
-    }, 1500);
+    }, 3500);
   } catch (err) {
     console.error("Fehler beim Liken:", err);
   }
