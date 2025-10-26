@@ -29,3 +29,30 @@ export const pause = () => fetchSpotify("/me/player/pause", "PUT");
 export const nextTrack = () => fetchSpotify("/me/player/next", "POST");
 
 export const previousTrack = () => fetchSpotify("/me/player/previous", "POST");
+
+// Lieblingssongs prüfen, hinzufügen oder entfernen
+export async function checkIfTrackIsSaved(trackId) {
+  const token = localStorage.getItem("access_token");
+  const res = await fetch(`https://api.spotify.com/v1/me/tracks/contains?ids=${trackId}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const data = await res.json();
+  return data[0]; // true oder false
+}
+
+export async function saveTrack(trackId) {
+  const token = localStorage.getItem("access_token");
+  await fetch(`https://api.spotify.com/v1/me/tracks?ids=${trackId}`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${token}` }
+  });
+}
+
+export async function removeTrack(trackId) {
+  const token = localStorage.getItem("access_token");
+  await fetch(`https://api.spotify.com/v1/me/tracks?ids=${trackId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` }
+  });
+}
+
