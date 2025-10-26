@@ -15,6 +15,13 @@ import {
   saveTrack,
   removeTrack,
 } from "./spotify";
+import {
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
+  Heart,
+} from "lucide-react"; // ✅ Lucide Icons
 
 function App() {
   const [track, setTrack] = useState(null);
@@ -101,7 +108,7 @@ function App() {
         padding: 0,
         fontFamily: "sans-serif",
         color: "#fff",
-        background: "linear-gradient(180deg, #0d0c1cff 50%, #372758 100%)",
+        background: "linear-gradient(180deg, #3a3d62 0%, #000000 100%)",
         minHeight: "100vh",
         width: "100vw",
         boxSizing: "border-box",
@@ -133,25 +140,25 @@ function App() {
           <img
             src={track.album.images[0].url}
             alt="cover"
-            width={240}
+            width={260}
             style={{
               borderRadius: 20,
-              boxShadow: "0 0 20px rgba(0,0,0,0.5)",
+              boxShadow: "0 0 25px rgba(0,0,0,0.5)",
             }}
           />
           <h2 style={{ marginTop: 20 }}>{track.name}</h2>
           <p style={{ opacity: 0.8 }}>{track.artists.map((a) => a.name).join(", ")}</p>
 
           {/* Progress bar */}
-          <div style={{ width: "80%", margin: "10px auto" }}>
+          <div style={{ width: "85%", margin: "15px auto" }}>
             <progress
               value={progressMs}
               max={track.duration_ms}
               style={{
                 width: "100%",
                 appearance: "none",
-                height: 6,
-                borderRadius: 3,
+                height: 10,
+                borderRadius: 5,
                 background: "#333",
               }}
             />
@@ -175,59 +182,58 @@ function App() {
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              gap: 20,
+              gap: 30,
             }}
           >
+            {/* Skip back */}
             <button
               onClick={previousTrack}
               style={{
-                background: "rgba(255,255,255,0.1)",
+                background: "none",
                 border: "none",
-                borderRadius: "50%",
-                width: 60,
-                height: 60,
-                color: "white",
-                fontSize: "1.5em",
                 cursor: "pointer",
+                color: "white",
               }}
             >
-              ⏮️
+              <SkipBack size={36} />
             </button>
+
+            {/* Play/Pause */}
             <button
               onClick={handlePlayPause}
               style={{
-                background: "#961dd8",
+                background: "white",
                 border: "none",
                 borderRadius: "50%",
-                width: 80,
-                height: 80,
-                color: "white",
-                fontSize: "2em",
+                width: 90,
+                height: 90,
+                color: "black",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
                 cursor: "pointer",
-                boxShadow: "0 0 20px rgba(0,0,0,0.4)",
+                boxShadow: "0 0 25px rgba(0,0,0,0.5)",
               }}
             >
-              {isPlaying ? "⏸️" : "▶️"}
+              {isPlaying ? <Pause size={44} /> : <Play size={44} />}
             </button>
+
+            {/* Skip forward */}
             <button
               onClick={nextTrack}
               style={{
-                background: "rgba(255,255,255,0.1)",
+                background: "none",
                 border: "none",
-                borderRadius: "50%",
-                width: 60,
-                height: 60,
-                color: "white",
-                fontSize: "1.5em",
                 cursor: "pointer",
+                color: "white",
               }}
             >
-              ⏭️
+              <SkipForward size={36} />
             </button>
           </div>
 
           {/* Herz-Button */}
-          <div style={{ marginTop: 15 }}>
+          <div style={{ marginTop: 20 }}>
             <button
               onClick={handleLike}
               style={{
@@ -238,7 +244,11 @@ function App() {
                 color: isLiked ? "red" : "white",
               }}
             >
-              {isLiked ? "❤️" : "🤍"}
+              <Heart
+                fill={isLiked ? "red" : "none"}
+                color={isLiked ? "red" : "white"}
+                size={36}
+              />
             </button>
           </div>
 
