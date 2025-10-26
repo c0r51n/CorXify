@@ -17,10 +17,13 @@ import {
 } from "./spotify";
 
 function App() {
-  const [track, setTrack] = useState(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [progressMs, setProgressMs] = useState(0);
-  const [isLiked, setIsLiked] = useState(false);
+  const [playback, setPlayback] = useState({
+    track: null,
+    isPlaying: false,
+    progressMs: 0,
+    isLiked: false
+  });
+
   const [isSeeking, setIsSeeking] = useState(false);
   const [seekPosition, setSeekPosition] = useState(0);
 
@@ -49,15 +52,13 @@ function App() {
     try {
       const data = await getCurrentPlayback();
       if (data && data.item) {
-        setTrack(data.item);
-        setIsPlaying(data.is_playing);
-
-        if (!isSeeking) {
-          setProgressMs(data.progress_ms);
-        }
-
         const saved = await checkIfTrackIsSaved(data.item.id);
-        setIsLiked(saved);
+        setPlayback({
+          track: data.item,
+          isPlaying: data.is_playing,
+          progressMs: isSeeking ? seekPosition : data.progress_ms,
+          isLiked: saved
+        });
       }
     } catch (err) {
       console.error(err);
@@ -66,29 +67,28 @@ function App() {
 
   async function handlePlayPause() {
     try {
-      if (isPlaying) await pause();
+      if (playback.isPlaying) await pause();
       else await play();
-      setIsPlaying(!isPlaying);
+      setPlayback(prev => ({ ...prev, isPlaying: !prev.isPlaying }));
     } catch (err) {
       console.error(err);
     }
   }
 
   async function handleLike() {
-    if (!track) return;
+    if (!playback.track) return;
     try {
-      if (isLiked) {
-        await removeTrack(track.id);
-        setIsLiked(false);
+      if (playback.isLiked) {
+        await removeTrack(playback.track.id);
+        setPlayback(prev => ({ ...prev, isLiked: false }));
       } else {
-        await saveTrack(track.id);
-        setIsLiked(true);
+        await saveTrack(playback.track.id);
+        setPlayback(prev => ({ ...prev, isLiked: true }));
       }
 
-      // kurze Pause, damit Spotify aktualisiert
       setTimeout(async () => {
-        const saved = await checkIfTrackIsSaved(track.id);
-        setIsLiked(saved);
+        const saved = await checkIfTrackIsSaved(playback.track.id);
+        setPlayback(prev => ({ ...prev, isLiked: saved }));
       }, 3500);
     } catch (err) {
       console.error("Fehler beim Liken:", err);
@@ -109,11 +109,11 @@ function App() {
 
     try {
       const token = getAccessToken();
-      await fetch(`https://api.spotify.com/v1/me/player/seek?position_ms=${newPosition}`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setProgressMs(newPosition);
+      await fetch(
+        `https://api.spotify.com/v1/me/player/seek?position_ms=${newPosition}`,
+        { method: "PUT", headers: { Authorization: `Bearer ${token}` } }
+      );
+      setPlayback(prev => ({ ...prev, progressMs: newPosition }));
     } catch (err) {
       console.error("Fehler beim Spulen:", err);
     }
@@ -133,7 +133,7 @@ function App() {
         fontFamily: "sans-serif",
         color: "#fff",
         background: "#121212",
-        minHeight: "100vh",
+        minHeight: "100vh"
       }}
     >
       <h1>CorXify</h1>
@@ -148,24 +148,24 @@ function App() {
         </button>
       ) : (
         <>
-          {track ? (
+          {playback.track ? (
             <div style={{ textAlign: "center" }}>
               <img
-                src={track.album.images[0].url}
+                src={playback.track.album.images[0].url}
                 alt="cover"
                 width={200}
                 style={{ borderRadius: 10 }}
               />
-              <h2>{track.name}</h2>
-              <p>{track.artists.map((a) => a.name).join(", ")}</p>
+              <h2>{playback.track.name}</h2>
+              <p>{playback.track.artists.map(a => a.name).join(", ")}</p>
 
-              {/* Fortschritt + Spulen */}
+              {/* Progress + Spulen */}
               <div style={{ width: "80%", margin: "10px auto" }}>
                 <input
                   type="range"
                   min="0"
-                  max={track.duration_ms}
-                  value={isSeeking ? seekPosition : progressMs}
+                  max={playback.track.duration_ms}
+                  value={isSeeking ? seekPosition : playback.progressMs}
                   onMouseDown={handleSeekStart}
                   onChange={handleSeekChange}
                   onMouseUp={handleSeekEnd}
@@ -173,35 +173,35 @@ function App() {
                   onTouchMove={handleSeekChange}
                   onTouchEnd={handleSeekEnd}
                   style={{
-    width: "100%",
-    cursor: "pointer",
-    accentColor: "#1DB954", // Spotify-Grün
-    touchAction: "none", // verhindert versehentliches Scrollen beim Spulen
-  }}
+                    width: "100%",
+                    cursor: "pointer",
+                    accentColor: "#1DB954",
+                    touchAction: "none"
+                  }}
                 />
                 <div
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
                     fontSize: "0.9em",
-                    opacity: 0.8,
+                    opacity: 0.8
                   }}
                 >
-                  <span>{formatTime(progressMs)}</span>
-                  <span>{formatTime(track.duration_ms)}</span>
+                  <span>{formatTime(playback.progressMs)}</span>
+                  <span>{formatTime(playback.track.duration_ms)}</span>
                 </div>
               </div>
 
-              {/* Buttons */}
+              {/* Steuerung */}
               <div style={{ marginTop: 10 }}>
                 <button onClick={previousTrack}>⏮️</button>
                 <button onClick={handlePlayPause}>
-                  {isPlaying ? "⏸️" : "▶️"}
+                  {playback.isPlaying ? "⏸️" : "▶️"}
                 </button>
                 <button onClick={nextTrack}>⏭️</button>
               </div>
 
-              {/* Herz-Button */}
+              {/* Herz */}
               <div style={{ marginTop: 15 }}>
                 <button
                   onClick={handleLike}
@@ -210,15 +210,31 @@ function App() {
                     border: "none",
                     cursor: "pointer",
                     fontSize: "1.8em",
-                    color: isLiked ? "red" : "white",
+                    color: playback.isLiked ? "red" : "white"
                   }}
                 >
-                  {isLiked ? "❤️" : "🤍"}
+                  {playback.isLiked ? "❤️" : "🤍"}
                 </button>
               </div>
             </div>
           ) : (
             <p>Keine Wiedergabe gefunden.</p>
+          )}
+
+          {/* Debug nur zum Kontrollieren */}
+          {playback.track && (
+            <pre
+              style={{
+                textAlign: "left",
+                fontSize: "0.7em",
+                background: "#222",
+                padding: "10px",
+                overflowX: "auto",
+                marginTop: 20
+              }}
+            >
+              {JSON.stringify(playback, null, 2)}
+            </pre>
           )}
 
           <button
