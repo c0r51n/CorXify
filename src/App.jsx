@@ -23,7 +23,7 @@ function App() {
 
     const interval = setInterval(() => {
       if (getAccessToken()) loadCurrentTrack();
-    }, 1000);
+    }, 100);
 
     return () => clearInterval(interval);
   }, []);
