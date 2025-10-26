@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   getAuthorizationUrl,
   fetchAccessToken,
@@ -21,13 +21,17 @@ import {
   SkipBack,
   SkipForward,
   Heart,
+  MoreVertical,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 function App() {
   const [track, setTrack] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progressMs, setProgressMs] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -46,7 +50,17 @@ function App() {
       if (getAccessToken()) loadCurrentTrack();
     }, 1000);
 
-    return () => clearInterval(interval);
+    // Klick außerhalb für Menü schließen
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   async function loadCurrentTrack() {
@@ -100,12 +114,15 @@ function App() {
     setProgressMs(newProgress);
 
     try {
-      await fetch("https://api.spotify.com/v1/me/player/seek?position_ms=" + newProgress, {
-        method: "PUT",
-        headers: {
-          Authorization: "Bearer " + getAccessToken(),
-        },
-      });
+      await fetch(
+        "https://api.spotify.com/v1/me/player/seek?position_ms=" + newProgress,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: "Bearer " + getAccessToken(),
+          },
+        }
+      );
     } catch (err) {
       console.error("Fehler beim Spulen:", err);
     }
@@ -135,7 +152,6 @@ function App() {
         justifyContent: "center",
       }}
     >
-      {/* 🔥 Verschwommener Hintergrund */}
       {track && (
         <div
           style={{
@@ -143,7 +159,7 @@ function App() {
             backgroundSize: "cover",
             backgroundPosition: "center",
             filter: "blur(15px)",
-            transform: "scale(0.8)",
+            transform: "scale(1.0)",
             opacity: 0.3,
             position: "absolute",
             top: 0,
@@ -155,7 +171,7 @@ function App() {
         />
       )}
 
-      <div style={{ position: "relative", zIndex: 1 }}>
+      <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
         {!getAccessToken() ? (
           <button
             onClick={async () =>
@@ -174,8 +190,7 @@ function App() {
             Mit Spotify verbinden
           </button>
         ) : track ? (
-          <div style={{ textAlign: "center" }}>
-            {/* 🎵 Cover wieder kleiner */}
+          <>
             <img
               src={track.album.images[0].url}
               alt="cover"
@@ -186,9 +201,11 @@ function App() {
               }}
             />
             <h2 style={{ marginTop: 20 }}>{track.name}</h2>
-            <p style={{ opacity: 0.8 }}>{track.artists.map((a) => a.name).join(", ")}</p>
+            <p style={{ opacity: 0.8 }}>
+              {track.artists.map((a) => a.name).join(", ")}
+            </p>
 
-            {/* 🎚 Fortschrittsbalken (weiß & rund) */}
+            {/* Progressbar */}
             <div style={{ width: "90%", margin: "15px auto" }}>
               <input
                 type="range"
@@ -200,7 +217,8 @@ function App() {
                   height: 6,
                   borderRadius: 10,
                   appearance: "none",
-                  background: "white",
+                  background: "#555",
+                  accentColor: "white",
                   cursor: "pointer",
                 }}
               />
@@ -217,7 +235,7 @@ function App() {
               </div>
             </div>
 
-            {/* 🎛 Buttons */}
+            {/* Buttons */}
             <div
               style={{
                 marginTop: 25,
@@ -271,9 +289,9 @@ function App() {
               </button>
             </div>
 
-            {/* ❤️ Like */}
-            <div style={{ marginTop: 20 }}>
-              <button
+            {/* Herz */}
+            <div style={{ marginTop: 25 }}>
+              <motion.button
                 onClick={handleLike}
                 style={{
                   background: "none",
@@ -282,39 +300,86 @@ function App() {
                   fontSize: "1.8em",
                   color: isLiked ? "red" : "white",
                 }}
+                animate={{ scale: isLiked ? [1, 1.3, 1] : 1 }}
+                transition={{ duration: 0.3 }}
               >
-                <Heart
-                  fill={isLiked ? "red" : "none"}
-                  color={isLiked ? "red" : "white"}
-                  size={36}
-                />
-              </button>
+                <Heart fill={isLiked ? "red" : "none"} color={isLiked ? "red" : "white"} size={36} />
+              </motion.button>
             </div>
-
-            {/* 🔄 Logout */}
-            <button
-              style={{
-                position: "absolute",
-                top: 20,
-                right: 20,
-                background: "rgba(255,255,255,0.1)",
-                color: "#fff",
-                border: "none",
-                borderRadius: 20,
-                padding: "6px 12px",
-                cursor: "pointer",
-              }}
-              onClick={() => {
-                logout();
-                window.location.reload();
-              }}
-            >
-              Neu verbinden
-            </button>
-          </div>
+          </>
         ) : (
           <p>Keine Wiedergabe gefunden.</p>
         )}
+
+        {/* Drei-Punkte Menü */}
+        <div style={{ position: "absolute", top: 20, right: 20 }} ref={menuRef}>
+          <button
+            onClick={() => setMenuOpen((prev) => !prev)}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "white",
+            }}
+          >
+            <MoreVertical size={28} />
+          </button>
+
+          <AnimatePresence>
+            {menuOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                style={{
+                  position: "fixed",
+                  top: 0,
+                  left: 0,
+                  width: "100vw",
+                  height: "100vh",
+                  background: "rgba(0,0,0,0.5)",
+                  backdropFilter: "blur(5px)",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  zIndex: 9999,
+                }}
+              >
+                <motion.div
+                  initial={{ scale: 0.8 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0.8 }}
+                  style={{
+                    background: "#1c1c1c",
+                    padding: 30,
+                    borderRadius: 20,
+                    minWidth: 200,
+                    textAlign: "center",
+                    color: "white",
+                  }}
+                >
+                  <button
+                    onClick={() => {
+                      logout();
+                      window.location.reload();
+                    }}
+                    style={{
+                      background: "#1db954",
+                      border: "none",
+                      borderRadius: 12,
+                      padding: "10px 20px",
+                      color: "#fff",
+                      cursor: "pointer",
+                      fontSize: "1em",
+                    }}
+                  >
+                    Neu verbinden
+                  </button>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );
