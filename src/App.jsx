@@ -101,7 +101,7 @@ function App() {
         padding: 0,
         fontFamily: "sans-serif",
         color: "#fff",
-        background: "linear-gradient(180deg, #3a3d62 0%, #000000 100%)",
+        background: "linear-gradient(180deg, #1e1b8e 0%, #000000 100%)",
         minHeight: "100vh",
         width: "100vw",
         boxSizing: "border-box",
@@ -196,7 +196,7 @@ function App() {
             <button
               onClick={handlePlayPause}
               style={{
-                background: "#1db954",
+                background: "#961dd8",
                 border: "none",
                 borderRadius: "50%",
                 width: 80,
