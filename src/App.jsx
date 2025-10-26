@@ -94,6 +94,23 @@ function App() {
     }
   }
 
+  async function handleSeek(event) {
+    if (!track) return;
+    const newProgress = Number(event.target.value);
+    setProgressMs(newProgress);
+
+    try {
+      await fetch("https://api.spotify.com/v1/me/player/seek?position_ms=" + newProgress, {
+        method: "PUT",
+        headers: {
+          Authorization: "Bearer " + getAccessToken(),
+        },
+      });
+    } catch (err) {
+      console.error("Fehler beim Spulen:", err);
+    }
+  }
+
   function formatTime(ms) {
     const totalSec = Math.floor(ms / 1000);
     const min = Math.floor(totalSec / 60);
@@ -140,7 +157,7 @@ function App() {
           <img
             src={track.album.images[0].url}
             alt="cover"
-            width={260}
+            width={320} // 🔼 größer gemacht
             style={{
               borderRadius: 20,
               boxShadow: "0 0 25px rgba(0,0,0,0.5)",
@@ -150,16 +167,19 @@ function App() {
           <p style={{ opacity: 0.8 }}>{track.artists.map((a) => a.name).join(", ")}</p>
 
           {/* Progress bar */}
-          <div style={{ width: "85%", margin: "15px auto" }}>
-            <progress
+          <div style={{ width: "90%", margin: "15px auto" }}> {/* 🔼 Breiter */}
+            <input
+              type="range"
               value={progressMs}
               max={track.duration_ms}
+              onChange={handleSeek}
               style={{
                 width: "100%",
-                appearance: "none",
-                height: 10,
+                height: 6, // 🔽 Dünner gemacht
                 borderRadius: 5,
+                appearance: "none",
                 background: "#333",
+                cursor: "pointer",
               }}
             />
             <div
@@ -178,14 +198,13 @@ function App() {
           {/* Buttons */}
           <div
             style={{
-              marginTop: 20,
+              marginTop: 25,
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              gap: 30,
+              gap: 50, // 🔼 Mehr Abstand
             }}
           >
-            {/* Skip back */}
             <button
               onClick={previousTrack}
               style={{
@@ -198,7 +217,6 @@ function App() {
               <SkipBack size={36} />
             </button>
 
-            {/* Play/Pause */}
             <button
               onClick={handlePlayPause}
               style={{
@@ -218,7 +236,6 @@ function App() {
               {isPlaying ? <Pause size={44} /> : <Play size={44} />}
             </button>
 
-            {/* Skip forward */}
             <button
               onClick={nextTrack}
               style={{
@@ -252,7 +269,6 @@ function App() {
             </button>
           </div>
 
-          {/* Logout */}
           <button
             style={{
               position: "absolute",
