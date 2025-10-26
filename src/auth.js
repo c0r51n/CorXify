@@ -34,7 +34,7 @@ export async function getAuthorizationUrl() {
   const verifier = await getCodeVerifier();
   const challenge = await sha256(verifier);
   const state = generateRandomString(16);
-  const scope = "user-read-playback-state user-modify-playback-state user-read-currently-playing";
+  const scope = "user-read-playback-state user-modify-playback-state user-read-currently-playing user-library-read user-library-modify";
   return `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&scope=${encodeURIComponent(scope)}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&code_challenge_method=S256&code_challenge=${challenge}`;
 }
 
