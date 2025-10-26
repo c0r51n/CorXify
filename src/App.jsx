@@ -3,7 +3,7 @@ import {
   getAuthorizationUrl,
   fetchAccessToken,
   getAccessToken,
-  logout
+  logout,
 } from "./auth";
 import {
   getCurrentPlayback,
@@ -13,22 +13,14 @@ import {
   previousTrack,
   checkIfTrackIsSaved,
   saveTrack,
-  removeTrack
+  removeTrack,
 } from "./spotify";
 
-import { Play, Pause, SkipBack, SkipForward, Heart } from "lucide-react";
-
 function App() {
-  const [playback, setPlayback] = useState({
-    track: null,
-    isPlaying: false,
-    progressMs: 0,
-    isLiked: false
-  });
-
-  const [isSeeking, setIsSeeking] = useState(false);
-  const [seekPosition, setSeekPosition] = useState(0);
-  const [heartPulse, setHeartPulse] = useState(false);
+  const [track, setTrack] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progressMs, setProgressMs] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -54,13 +46,11 @@ function App() {
     try {
       const data = await getCurrentPlayback();
       if (data && data.item) {
+        setTrack(data.item);
+        setIsPlaying(data.is_playing);
+        setProgressMs(data.progress_ms);
         const saved = await checkIfTrackIsSaved(data.item.id);
-        setPlayback({
-          track: data.item,
-          isPlaying: data.is_playing,
-          progressMs: isSeeking ? seekPosition : data.progress_ms,
-          isLiked: saved
-        });
+        setIsLiked(saved);
       }
     } catch (err) {
       console.error(err);
@@ -69,58 +59,31 @@ function App() {
 
   async function handlePlayPause() {
     try {
-      if (playback.isPlaying) await pause();
+      if (isPlaying) await pause();
       else await play();
-      setPlayback(prev => ({ ...prev, isPlaying: !prev.isPlaying }));
+      setIsPlaying(!isPlaying);
     } catch (err) {
       console.error(err);
     }
   }
 
   async function handleLike() {
-    if (!playback.track) return;
+    if (!track) return;
     try {
-      setHeartPulse(true);
-      if (playback.isLiked) {
-        await removeTrack(playback.track.id);
-        setPlayback(prev => ({ ...prev, isLiked: false }));
+      if (isLiked) {
+        await removeTrack(track.id);
+        setIsLiked(false);
       } else {
-        await saveTrack(playback.track.id);
-        setPlayback(prev => ({ ...prev, isLiked: true }));
+        await saveTrack(track.id);
+        setIsLiked(true);
       }
 
       setTimeout(async () => {
-        const saved = await checkIfTrackIsSaved(playback.track.id);
-        setPlayback(prev => ({ ...prev, isLiked: saved }));
-        setHeartPulse(false);
-      }, 1000);
+        const saved = await checkIfTrackIsSaved(track.id);
+        setIsLiked(saved);
+      }, 3500);
     } catch (err) {
       console.error("Fehler beim Liken:", err);
-      setHeartPulse(false);
-    }
-  }
-
-  async function handleSeekStart() {
-    setIsSeeking(true);
-  }
-
-  async function handleSeekChange(e) {
-    setSeekPosition(parseInt(e.target.value, 10));
-  }
-
-  async function handleSeekEnd(e) {
-    setIsSeeking(false);
-    const newPosition = parseInt(e.target.value, 10);
-
-    try {
-      const token = getAccessToken();
-      await fetch(
-        `https://api.spotify.com/v1/me/player/seek?position_ms=${newPosition}`,
-        { method: "PUT", headers: { Authorization: `Bearer ${token}` } }
-      );
-      setPlayback(prev => ({ ...prev, progressMs: newPosition }));
-    } catch (err) {
-      console.error("Fehler beim Spulen:", err);
     }
   }
 
@@ -134,159 +97,163 @@ function App() {
   return (
     <div
       style={{
-        padding: 20,
+        margin: 0,
+        padding: 0,
         fontFamily: "sans-serif",
         color: "#fff",
-        background: "#121212",
-        minHeight: "100vh"
+        background: "linear-gradient(180deg, #3a3d62 0%, #000000 100%)",
+        minHeight: "100vh",
+        width: "100vw",
+        boxSizing: "border-box",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
-      <h1>CorXify</h1>
-
       {!getAccessToken() ? (
         <button
           onClick={async () =>
             (window.location.href = await getAuthorizationUrl())
           }
           style={{
-            padding: "10px 20px",
-            fontSize: 16,
-            borderRadius: 8,
-            cursor: "pointer",
-            background: "#1DB954",
+            background: "#1db954",
             color: "#fff",
-            border: "none"
+            border: "none",
+            borderRadius: 50,
+            padding: "10px 20px",
+            fontSize: "1em",
+            cursor: "pointer",
           }}
         >
           Mit Spotify verbinden
         </button>
-      ) : (
-        <>
-          {playback.track ? (
-            <div style={{ textAlign: "center" }}>
-              <img
-                src={playback.track.album.images[0].url}
-                alt="cover"
-                width={200}
-                style={{ borderRadius: 10 }}
-              />
-              <h2>{playback.track.name}</h2>
-              <p>{playback.track.artists.map(a => a.name).join(", ")}</p>
+      ) : track ? (
+        <div style={{ textAlign: "center" }}>
+          <img
+            src={track.album.images[0].url}
+            alt="cover"
+            width={240}
+            style={{
+              borderRadius: 20,
+              boxShadow: "0 0 20px rgba(0,0,0,0.5)",
+            }}
+          />
+          <h2 style={{ marginTop: 20 }}>{track.name}</h2>
+          <p style={{ opacity: 0.8 }}>{track.artists.map((a) => a.name).join(", ")}</p>
 
-              {/* Progress + Slider */}
-              <div style={{ width: "80%", margin: "10px auto" }}>
-                <input
-                  type="range"
-                  min="0"
-                  max={playback.track.duration_ms}
-                  value={isSeeking ? seekPosition : playback.progressMs}
-                  onMouseDown={handleSeekStart}
-                  onChange={handleSeekChange}
-                  onMouseUp={handleSeekEnd}
-                  onTouchStart={handleSeekStart}
-                  onTouchMove={handleSeekChange}
-                  onTouchEnd={handleSeekEnd}
-                  style={{
-                    width: "100%",
-                    cursor: "pointer",
-                    accentColor: "#1DB954",
-                    touchAction: "none"
-                  }}
-                />
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    fontSize: "0.9em",
-                    opacity: 0.8
-                  }}
-                >
-                  <span>{formatTime(playback.progressMs)}</span>
-                  <span>{formatTime(playback.track.duration_ms)}</span>
-                </div>
-              </div>
-
-              {/* Steuerungsbuttons */}
-              <div
-                style={{
-                  marginTop: 10,
-                  display: "flex",
-                  justifyContent: "center",
-                  gap: 20
-                }}
-              >
-                <button
-                  onClick={previousTrack}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer"
-                  }}
-                >
-                  <SkipBack size={32} />
-                </button>
-
-                <button
-                  onClick={handlePlayPause}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer"
-                  }}
-                >
-                  {playback.isPlaying ? (
-                    <Pause size={36} />
-                  ) : (
-                    <Play size={36} />
-                  )}
-                </button>
-
-                <button
-                  onClick={nextTrack}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer"
-                  }}
-                >
-                  <SkipForward size={32} />
-                </button>
-              </div>
-
-              {/* Herz */}
-              <div style={{ marginTop: 15 }}>
-                <button
-                  onClick={handleLike}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: 32,
-                    color: playback.isLiked ? "red" : "white",
-                    transform: heartPulse ? "scale(1.3)" : "scale(1)",
-                    transition: "transform 0.3s"
-                  }}
-                >
-                  <Heart size={32} />
-                </button>
-              </div>
+          {/* Progress bar */}
+          <div style={{ width: "80%", margin: "10px auto" }}>
+            <progress
+              value={progressMs}
+              max={track.duration_ms}
+              style={{
+                width: "100%",
+                appearance: "none",
+                height: 6,
+                borderRadius: 3,
+                background: "#333",
+              }}
+            />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: "0.9em",
+                opacity: 0.8,
+              }}
+            >
+              <span>{formatTime(progressMs)}</span>
+              <span>{formatTime(track.duration_ms)}</span>
             </div>
-          ) : (
-            <p>Keine Wiedergabe gefunden.</p>
-          )}
+          </div>
 
-          {/* Neu verbinden */}
+          {/* Buttons */}
+          <div
+            style={{
+              marginTop: 20,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: 20,
+            }}
+          >
+            <button
+              onClick={previousTrack}
+              style={{
+                background: "rgba(255,255,255,0.1)",
+                border: "none",
+                borderRadius: "50%",
+                width: 60,
+                height: 60,
+                color: "white",
+                fontSize: "1.5em",
+                cursor: "pointer",
+              }}
+            >
+              ⏮️
+            </button>
+            <button
+              onClick={handlePlayPause}
+              style={{
+                background: "#1db954",
+                border: "none",
+                borderRadius: "50%",
+                width: 80,
+                height: 80,
+                color: "white",
+                fontSize: "2em",
+                cursor: "pointer",
+                boxShadow: "0 0 20px rgba(0,0,0,0.4)",
+              }}
+            >
+              {isPlaying ? "⏸️" : "▶️"}
+            </button>
+            <button
+              onClick={nextTrack}
+              style={{
+                background: "rgba(255,255,255,0.1)",
+                border: "none",
+                borderRadius: "50%",
+                width: 60,
+                height: 60,
+                color: "white",
+                fontSize: "1.5em",
+                cursor: "pointer",
+              }}
+            >
+              ⏭️
+            </button>
+          </div>
+
+          {/* Herz-Button */}
+          <div style={{ marginTop: 15 }}>
+            <button
+              onClick={handleLike}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "1.8em",
+                color: isLiked ? "red" : "white",
+              }}
+            >
+              {isLiked ? "❤️" : "🤍"}
+            </button>
+          </div>
+
+          {/* Logout */}
           <button
             style={{
               position: "absolute",
               top: 20,
               right: 20,
-              padding: "6px 12px",
-              borderRadius: 6,
-              cursor: "pointer",
-              background: "#1DB954",
+              background: "rgba(255,255,255,0.1)",
               color: "#fff",
-              border: "none"
+              border: "none",
+              borderRadius: 20,
+              padding: "6px 12px",
+              cursor: "pointer",
             }}
             onClick={() => {
               logout();
@@ -295,7 +262,9 @@ function App() {
           >
             Neu verbinden
           </button>
-        </>
+        </div>
+      ) : (
+        <p>Keine Wiedergabe gefunden.</p>
       )}
     </div>
   );
