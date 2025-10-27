@@ -518,23 +518,23 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
 </button>
 
 {backgroundType === "gradient" && (
-  <>
-    <label>Startfarbe:</label>
-    <input
-      type="color"
-      value={gradientBg.start}
-      onChange={(e) => setGradientBg({ ...gradientBg, start: e.target.value })}
-      style={{ width: "100%", marginBottom: 8 }}
-    />
-
-    <label>Endfarbe:</label>
-    <input
-      type="color"
-      value={gradientBg.end}
-      onChange={(e) => setGradientBg({ ...gradientBg, end: e.target.value })}
-      style={{ width: "100%", marginBottom: 12 }}
-    />
-  </>
+  <div style={{ marginBottom: 12 }}>
+    <label style={{ display: "block", marginBottom: 8 }}>Farbverlauf wählen:</label>
+    <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+      <input
+        type="color"
+        value={gradientBg.start}
+        onChange={e => setGradientBg({ ...gradientBg, start: e.target.value })}
+        style={{ flex: 1, height: 36, borderRadius: 8, border: "none", cursor: "pointer" }}
+      />
+      <input
+        type="color"
+        value={gradientBg.end}
+        onChange={e => setGradientBg({ ...gradientBg, end: e.target.value })}
+        style={{ flex: 1, height: 36, borderRadius: 8, border: "none", cursor: "pointer" }}
+      />
+    </div>
+  </div>
 )}
 
 
