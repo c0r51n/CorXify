@@ -416,39 +416,38 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
           color: "white",
         }}
       >
-        <button
-          onClick={() => {
-            logout();
-            window.location.reload();
-          }}
-          style={{
-            background: "linear-gradient(135deg, #1d1c3b 0%, #372758 100%)",
-            border: "none",
-            borderRadius: 12,
-            padding: "10px 20px",
-            color: "#fff",
-            cursor: "pointer",
-            fontSize: "1em",
-            marginBottom: 15,
-          }}
-        >
-          Neu verbinden
-        </button>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+  <button
+    onClick={() => { logout(); window.location.reload(); }}
+    style={{
+      background: "linear-gradient(135deg, #1d1c3b 0%, #372758 100%)",
+      border: "none",
+      borderRadius: 12,
+      padding: "10px 20px",
+      color: "#fff",
+      cursor: "pointer",
+      fontSize: "1em",
+    }}
+  >
+    Neu verbinden
+  </button>
 
-        <button
-          onClick={() => setShowDesignMenu((prev) => !prev)}
-          style={{
-            background: "linear-gradient(135deg, #1d1c3b 0%, #372758 100%)",
-            border: "none",
-            borderRadius: 12,
-            padding: "10px 20px",
-            color: "#fff",
-            cursor: "pointer",
-            fontSize: "1em",
-          }}
-        >
-          Design
-        </button>
+  <button
+    onClick={() => setShowDesignMenu(prev => !prev)}
+    style={{
+      background: "linear-gradient(135deg, #1d1c3b 0%, #372758 100%)",
+      border: "none",
+      borderRadius: 12,
+      padding: "10px 20px",
+      color: "#fff",
+      cursor: "pointer",
+      fontSize: "1em",
+    }}
+  >
+    Design
+  </button>
+</div>
+
 
         {/* Design Settings Panel */}
 <AnimatePresence>
