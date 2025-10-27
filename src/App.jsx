@@ -32,6 +32,12 @@ function App() {
   const [isLiked, setIsLiked] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef();
+  // Hintergrund-Typ: "cover" oder "gradient"
+const [backgroundType, setBackgroundType] = useState("cover");
+
+// Farbverlauf-Farben
+const [gradientBg, setGradientBg] = useState({ start: "#3a3d62", end: "#000000" });
+
   const [designSettings, setDesignSettings] = useState({
   blur: 15,
   useCoverBackground: true,
@@ -162,13 +168,13 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
         justifyContent: "center",
       }}
     >
-      {designSettings.useCoverBackground && track ? (
+      {track && backgroundType === "cover" && (
   <div
     style={{
       backgroundImage: `url(${track.album.images[0].url})`,
       backgroundSize: "cover",
       backgroundPosition: "center",
-      filter: `blur(${designSettings.blur}px)`,
+      filter: "blur(15px)",
       transform: "scale(1.0)",
       opacity: 0.3,
       position: "absolute",
@@ -179,11 +185,12 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
       zIndex: 0,
     }}
   />
-) : (
+)}
+
+{backgroundType === "gradient" && (
   <div
     style={{
-      background: "linear-gradient(135deg, #3a3d62 0%, #000000 100%)",
-      filter: `blur(${designSettings.blur}px)`,
+      background: `linear-gradient(135deg, ${gradientBg.start}, ${gradientBg.end})`,
       position: "absolute",
       top: 0,
       left: 0,
@@ -193,6 +200,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
     }}
   />
 )}
+
 
       <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
         {track ? (
@@ -399,7 +407,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
         exit={{ scale: 0.8, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "linear-gradient(315deg, #1d1c3b 0%, #372758 100%)",
+          background: "linear-gradient(135deg, #1d1c3b 0%, #372758 100%)",
           padding: 30,
           borderRadius: 20,
           minWidth: 240,
@@ -413,7 +421,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
             window.location.reload();
           }}
           style={{
-            background: "linear-gradient(315deg, #1d1c3b 0%, #372758 100%)",
+            background: "linear-gradient(135deg, #1d1c3b 0%, #372758 100%)",
             border: "none",
             borderRadius: 12,
             padding: "10px 20px",
@@ -429,7 +437,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
         <button
           onClick={() => setShowDesignMenu((prev) => !prev)}
           style={{
-            background: "linear-gradient(315deg, #1d1c3b 0%, #372758 100%)",
+            background: "linear-gradient(135deg, #1d1c3b 0%, #372758 100%)",
             border: "none",
             borderRadius: 12,
             padding: "10px 20px",
@@ -442,91 +450,126 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
         </button>
 
         {/* Design Settings Panel */}
-        <AnimatePresence>
-          {showDesignMenu && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+<AnimatePresence>
+  {showDesignMenu && (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      style={{
+        marginTop: 20,
+        background: "rgba(255,255,255,0.05)",
+        borderRadius: 12,
+        padding: 15,
+        textAlign: "left",
+      }}
+    >
+      {/* 1. Blur */}
+      <label style={{ display: "block", marginBottom: 8 }}>
+        Hintergrund-Unschärfe: {designSettings.blur}px
+      </label>
+      <input
+        type="range"
+        min="0"
+        max="30"
+        value={designSettings.blur}
+        onChange={(e) =>
+          setDesignSettings({
+            ...designSettings,
+            blur: Number(e.target.value),
+          })
+        }
+        style={{ width: "100%", marginBottom: 12 }}
+      />
+
+      {/* 2. Hintergrund */}
+      <label style={{ display: "block", marginBottom: 8 }}>
+        Hintergrund:
+      </label>
+      <button
+        onClick={() =>
+          setDesignSettings((prev) => ({
+            ...prev,
+            useCoverBackground: !prev.useCoverBackground,
+          }))
+        }
+        style={{
+          width: "100%",
+          background: "linear-gradient(135deg, #1d1c3b 0%, #372758 100%)",
+          border: "none",
+          borderRadius: 10,
+          padding: "8px 0",
+          color: "white",
+          marginBottom: 12,
+          cursor: "pointer",
+        }}
+      >
+        {designSettings.useCoverBackground ? "Cover-Hintergrund" : "Farbverlauf"}
+      </button>
+
+      {/* 3. Farbverlauf-Auswahl */}
+      {!designSettings.useCoverBackground && (
+        <div style={{ marginBottom: 12 }}>
+          <label style={{ display: "block", marginBottom: 8 }}>
+            Farbverlauf wählen:
+          </label>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              onClick={() =>
+                setGradientBg({ start: "#1d1c3b", end: "#372758" })
+              }
               style={{
-                marginTop: 20,
-                background: "rgba(255,255,255,0.05)",
-                borderRadius: 12,
-                padding: 15,
-                textAlign: "left",
+                flex: 1,
+                height: 30,
+                borderRadius: 6,
+                border: "none",
+                cursor: "pointer",
+                background: "linear-gradient(135deg, #1d1c3b 0%, #372758 100%)",
               }}
-            >
-              <label style={{ display: "block", marginBottom: 8 }}>
-                Hintergrund-Unschärfe: {designSettings.blur}px
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="30"
-                value={designSettings.blur}
-                onChange={(e) =>
-                  setDesignSettings({
-                    ...designSettings,
-                    blur: Number(e.target.value),
-                  })
-                }
-                style={{ width: "100%", marginBottom: 12 }}
-              />
+            />
+            <button
+              onClick={() =>
+                setGradientBg({ start: "#3d4068", end: "#000000" })
+              }
+              style={{
+                flex: 1,
+                height: 30,
+                borderRadius: 6,
+                border: "none",
+                cursor: "pointer",
+                background: "linear-gradient(135deg, #3d4068 0%, #000000 100%)",
+              }}
+            />
+            {/* Weitere Farbverläufe können hier hinzugefügt werden */}
+          </div>
+        </div>
+      )}
 
-              <label style={{ display: "block", marginBottom: 8 }}>
-                Hintergrund:
-              </label>
-              <button
-                onClick={() =>
-                  setDesignSettings((prev) => ({
-                    ...prev,
-                    useCoverBackground: !prev.useCoverBackground,
-                  }))
-                }
-                style={{
-                  width: "100%",
-                  background: "linear-gradient(315deg, #1d1c3b 0%, #372758 100%)",
-                  border: "none",
-                  borderRadius: 10,
-                  padding: "8px 0",
-                  color: "white",
-                  marginBottom: 12,
-                  cursor: "pointer",
-                }}
-              >
-                {designSettings.useCoverBackground
-                  ? "Cover-Hintergrund"
-                  : "Farbverlauf"}
-              </button>
+      {/* 4. Cover-Form */}
+      <label style={{ display: "block", marginBottom: 8 }}>Cover-Form:</label>
+      <button
+        onClick={() =>
+          setDesignSettings((prev) => ({
+            ...prev,
+            coverShape: prev.coverShape === "rounded" ? "circle" : "rounded",
+          }))
+        }
+        style={{
+          width: "100%",
+          background: "linear-gradient(135deg, #1d1c3b 0%, #372758 100%)",
+          border: "none",
+          borderRadius: 10,
+          padding: "8px 0",
+          color: "white",
+          cursor: "pointer",
+        }}
+      >
+        {designSettings.coverShape === "rounded" ? "Abgerundet" : "Rund"}
+      </button>
+    </motion.div>
+  )}
+</AnimatePresence>
 
-              <label style={{ display: "block", marginBottom: 8 }}>
-                Cover-Form:
-              </label>
-              <button
-                onClick={() =>
-                  setDesignSettings((prev) => ({
-                    ...prev,
-                    coverShape:
-                      prev.coverShape === "rounded" ? "circle" : "rounded",
-                  }))
-                }
-                style={{
-                  width: "100%",
-                  background: "linear-gradient(315deg, #1d1c3b 0%, #372758 100%)",
-                  border: "none",
-                  borderRadius: 10,
-                  padding: "8px 0",
-                  color: "white",
-                  cursor: "pointer",
-                }}
-              >
-                {designSettings.coverShape === "rounded"
-                  ? "Abgerundet"
-                  : "Rund"}
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </motion.div>
     </motion.div>
   )}
