@@ -32,6 +32,13 @@ function App() {
   const [isLiked, setIsLiked] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef();
+  const [designSettings, setDesignSettings] = useState({
+  blur: 15,
+  useCoverBackground: true,
+  coverShape: "rounded" // oder "circle"
+});
+const [showDesignMenu, setShowDesignMenu] = useState(false);
+
 
   // --- Verbindung + Track laden ---
   useEffect(() => {
