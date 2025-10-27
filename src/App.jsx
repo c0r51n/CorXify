@@ -399,7 +399,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
         exit={{ scale: 0.8, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "linear-gradient(135deg, #1d1c3b 0%, #372758 100%)",
+          background: "linear-gradient(315deg, #1d1c3b 0%, #372758 100%)",
           padding: 30,
           borderRadius: 20,
           minWidth: 240,
@@ -413,7 +413,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
             window.location.reload();
           }}
           style={{
-            background: "linear-gradient(90deg, #1d1c3b 0%, #372758 100%)",
+            background: "linear-gradient(315deg, #1d1c3b 0%, #372758 100%)",
             border: "none",
             borderRadius: 12,
             padding: "10px 20px",
@@ -429,7 +429,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
         <button
           onClick={() => setShowDesignMenu((prev) => !prev)}
           style={{
-            background: "linear-gradient(90deg, #1d1c3b 0%, #372758 100%)",
+            background: "linear-gradient(315deg, #1d1c3b 0%, #372758 100%)",
             border: "none",
             borderRadius: 12,
             padding: "10px 20px",
@@ -485,7 +485,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
                 }
                 style={{
                   width: "100%",
-                  background: "linear-gradient(90deg, #1d1c3b 0%, #372758 100%)",
+                  background: "linear-gradient(315deg, #1d1c3b 0%, #372758 100%)",
                   border: "none",
                   borderRadius: 10,
                   padding: "8px 0",
@@ -512,7 +512,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
                 }
                 style={{
                   width: "100%",
-                  background: "linear-gradient(90deg, #1d1c3b 0%, #372758 100%)",
+                  background: "linear-gradient(315deg, #1d1c3b 0%, #372758 100%)",
                   border: "none",
                   borderRadius: 10,
                   padding: "8px 0",
