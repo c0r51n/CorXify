@@ -155,24 +155,37 @@ function App() {
         justifyContent: "center",
       }}
     >
-      {track && (
-        <div
-          style={{
-            backgroundImage: `url(${track.album.images[0].url})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            filter: "blur(15px)",
-            transform: "scale(1.0)",
-            opacity: 0.3,
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            zIndex: 0,
-          }}
-        />
-      )}
+      {designSettings.useCoverBackground && track ? (
+  <div
+    style={{
+      backgroundImage: `url(${track.album.images[0].url})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      filter: `blur(${designSettings.blur}px)`,
+      transform: "scale(1.0)",
+      opacity: 0.3,
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      zIndex: 0,
+    }}
+  />
+) : (
+  <div
+    style={{
+      background: "linear-gradient(135deg, #3a3d62 0%, #000000 100%)",
+      filter: `blur(${designSettings.blur}px)`,
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      zIndex: 0,
+    }}
+  />
+)}
 
       <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
         {track ? (
@@ -182,9 +195,9 @@ function App() {
               alt="cover"
               width={260}
               style={{
-                borderRadius: 20,
-                boxShadow: "0 0 25px rgba(0,0,0,0.5)",
-              }}
+  borderRadius: designSettings.coverShape === "circle" ? "50%" : 20,
+  boxShadow: "0 0 25px rgba(0,0,0,0.5)",
+}}
             />
             <h2 style={{ marginTop: 20 }}>{track.name}</h2>
             <p style={{ opacity: 0.8 }}>
@@ -337,8 +350,6 @@ function App() {
           <p>--</p>
         )}
 
-        /* === Ab Zeile ~270 ersetzen === */
-
 {/* Drei-Punkte Menü */}
 <div style={{ position: "fixed", top: 20, right: 20 }} ref={menuRef}>
   <button
@@ -355,61 +366,165 @@ function App() {
   </button>
 
   <AnimatePresence>
-    {menuOpen && (
+  {menuOpen && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={() => setMenuOpen(false)} // Klick außen schließt Menü
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        background: "rgba(0,0,0,0.5)",
+        backdropFilter: "blur(5px)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 9999,
+      }}
+    >
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={() => setMenuOpen(false)} // Klick außen schließt Menü
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.8, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
         style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100vw",
-          height: "100vh",
-          background: "rgba(0,0,0,0.5)",
-          backdropFilter: "blur(5px)",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          zIndex: 9999,
+          background: "linear-gradient(135deg, #1d1c3b 0%, #372758 100%)",
+          padding: 30,
+          borderRadius: 20,
+          minWidth: 240,
+          textAlign: "center",
+          color: "white",
         }}
       >
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.8, opacity: 0 }}
-          onClick={(e) => e.stopPropagation()} // Klick im Menü blockiert Schließen
+        <button
+          onClick={() => {
+            logout();
+            window.location.reload();
+          }}
           style={{
-            background: "#1c1c1c",
-            padding: 25,
-            borderRadius: 20,
-            minWidth: 180,
-            textAlign: "center",
-            color: "white",
+            background: "linear-gradient(90deg, #3d4068 0%, #000000 100%)",
+            border: "none",
+            borderRadius: 12,
+            padding: "10px 20px",
+            color: "#fff",
+            cursor: "pointer",
+            fontSize: "1em",
+            marginBottom: 15,
           }}
         >
-          <button
-            onClick={() => {
-              logout();
-              window.location.reload();
-            }}
-            style={{
-              background: "#1db954",
-              border: "none",
-              borderRadius: 12,
-              padding: "10px 18px",
-              color: "#fff",
-              cursor: "pointer",
-              fontSize: "1em",
-            }}
-          >
-            Neu verbinden
-          </button>
-        </motion.div>
+          Neu verbinden
+        </button>
+
+        <button
+          onClick={() => setShowDesignMenu((prev) => !prev)}
+          style={{
+            background: "linear-gradient(90deg, #3d4068 0%, #000000 100%)",
+            border: "none",
+            borderRadius: 12,
+            padding: "10px 20px",
+            color: "#fff",
+            cursor: "pointer",
+            fontSize: "1em",
+          }}
+        >
+          Design
+        </button>
+
+        {/* Design Settings Panel */}
+        <AnimatePresence>
+          {showDesignMenu && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              style={{
+                marginTop: 20,
+                background: "rgba(255,255,255,0.05)",
+                borderRadius: 12,
+                padding: 15,
+                textAlign: "left",
+              }}
+            >
+              <label style={{ display: "block", marginBottom: 8 }}>
+                Hintergrund-Unschärfe: {designSettings.blur}px
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="30"
+                value={designSettings.blur}
+                onChange={(e) =>
+                  setDesignSettings({
+                    ...designSettings,
+                    blur: Number(e.target.value),
+                  })
+                }
+                style={{ width: "100%", marginBottom: 12 }}
+              />
+
+              <label style={{ display: "block", marginBottom: 8 }}>
+                Hintergrund:
+              </label>
+              <button
+                onClick={() =>
+                  setDesignSettings((prev) => ({
+                    ...prev,
+                    useCoverBackground: !prev.useCoverBackground,
+                  }))
+                }
+                style={{
+                  width: "100%",
+                  background: "#2b2b2b",
+                  border: "none",
+                  borderRadius: 10,
+                  padding: "8px 0",
+                  color: "white",
+                  marginBottom: 12,
+                  cursor: "pointer",
+                }}
+              >
+                {designSettings.useCoverBackground
+                  ? "Cover-Hintergrund"
+                  : "Farbverlauf"}
+              </button>
+
+              <label style={{ display: "block", marginBottom: 8 }}>
+                Cover-Form:
+              </label>
+              <button
+                onClick={() =>
+                  setDesignSettings((prev) => ({
+                    ...prev,
+                    coverShape:
+                      prev.coverShape === "rounded" ? "circle" : "rounded",
+                  }))
+                }
+                style={{
+                  width: "100%",
+                  background: "#2b2b2b",
+                  border: "none",
+                  borderRadius: 10,
+                  padding: "8px 0",
+                  color: "white",
+                  cursor: "pointer",
+                }}
+              >
+                {designSettings.coverShape === "rounded"
+                  ? "Abgerundet"
+                  : "Rund"}
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
-    )}
-  </AnimatePresence>
+    </motion.div>
+  )}
+</AnimatePresence>
+
 </div>
 
       </div>
