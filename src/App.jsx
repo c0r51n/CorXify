@@ -142,7 +142,7 @@ function App() {
         padding: 0,
         fontFamily: "sans-serif",
         color: "#fff",
-        background: "linear-gradient(180deg, #3a3d62 0%, #000000 100%)",
+        background: "linear-gradient(200deg, #3a3d62 0%, #000000 100%)",
         minHeight: "100vh",
         width: "100vw",
         overflow: "hidden",
