@@ -320,7 +320,7 @@ function App() {
                 marginTop: "25px",
               }}
             >
-              {isLiked ? "❤️" : "🤍"}
+              {isLiked ? "❤️" : "🤍❌"}
             </motion.button>
           </>
         ) : (
