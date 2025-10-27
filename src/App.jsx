@@ -192,55 +192,68 @@ function App() {
             </p>
 
             {/* Progressbar */}
-            <div style={{ width: "90%", margin: "15px auto" }}>
-              <div
-                style={{
-                  position: "relative",
-                  height: 6,
-                  borderRadius: 10,
-                  background: "#444",
-                }}
-              >
-                <div
-                  style={{
-                    position: "absolute",
-                    height: 6,
-                    borderRadius: 10,
-                    background: "white",
-                    width: `${
-                      (progressMs / track.duration_ms) * 100 || 0
-                    }%`,
-                  }}
-                />
-                <input
-                  type="range"
-                  value={progressMs}
-                  max={track.duration_ms}
-                  onChange={handleSeek}
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: 6,
-                    opacity: 0,
-                    cursor: "pointer",
-                  }}
-                />
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  fontSize: "0.9em",
-                  opacity: 0.8,
-                  marginTop: 4,
-                }}
-              >
-                <span>{formatTime(progressMs)}</span>
-                <span>{formatTime(track.duration_ms)}</span>
-              </div>
-            </div>
+<div style={{ width: "90%", margin: "15px auto" }}>
+  <div
+    style={{
+      position: "relative",
+      height: 6,
+      borderRadius: 10,
+      background: "#444",
+    }}
+  >
+    <div
+      style={{
+        position: "absolute",
+        height: 6,
+        borderRadius: 10,
+        background: "white",
+        width: `${(progressMs / track.duration_ms) * 100 || 0}%`,
+      }}
+    />
+    {/* weißer Kreis-Punkt */}
+    <div
+      style={{
+        position: "absolute",
+        top: "50%",
+        left: `${(progressMs / track.duration_ms) * 100 || 0}%`,
+        transform: "translate(-50%, -50%)",
+        width: 14,
+        height: 14,
+        background: "white",
+        borderRadius: "50%",
+        pointerEvents: "none",
+      }}
+    />
+    <input
+      type="range"
+      value={progressMs}
+      max={track.duration_ms}
+      onChange={handleSeek}
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: 6,
+        opacity: 0,
+        cursor: "pointer",
+      }}
+    />
+  </div>
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      fontSize: "0.9em",
+      opacity: 0.8,
+      marginTop: 4,
+    }}
+  >
+    <span>{formatTime(progressMs)}</span>
+    <span>{formatTime(track.duration_ms)}</span>
+  </div>
+</div>
+
 
             {/* Buttons */}
             <div
@@ -324,77 +337,81 @@ function App() {
           <p>--</p>
         )}
 
-        {/* Drei-Punkte Menü */}
-        <div style={{ position: "absolute", top: 20, right: 20 }} ref={menuRef}>
+        /* === Ab Zeile ~270 ersetzen === */
+
+{/* Drei-Punkte Menü */}
+<div style={{ position: "fixed", top: 20, right: 20 }} ref={menuRef}>
+  <button
+    onClick={() => setMenuOpen((prev) => !prev)}
+    style={{
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      color: "white",
+      padding: 6,
+    }}
+  >
+    <MoreVertical size={22} /> {/* kleiner gemacht */}
+  </button>
+
+  <AnimatePresence>
+    {menuOpen && (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={() => setMenuOpen(false)} // Klick außen schließt Menü
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          background: "rgba(0,0,0,0.5)",
+          backdropFilter: "blur(5px)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 9999,
+        }}
+      >
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.8, opacity: 0 }}
+          onClick={(e) => e.stopPropagation()} // Klick im Menü blockiert Schließen
+          style={{
+            background: "#1c1c1c",
+            padding: 25,
+            borderRadius: 20,
+            minWidth: 180,
+            textAlign: "center",
+            color: "white",
+          }}
+        >
           <button
-            onClick={() => setMenuOpen((prev) => !prev)}
+            onClick={() => {
+              logout();
+              window.location.reload();
+            }}
             style={{
-              background: "none",
+              background: "#1db954",
               border: "none",
+              borderRadius: 12,
+              padding: "10px 18px",
+              color: "#fff",
               cursor: "pointer",
-              color: "white",
+              fontSize: "1em",
             }}
           >
-            <MoreVertical size={28} />
+            Neu verbinden
           </button>
+        </motion.div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+</div>
 
-          <AnimatePresence>
-            {menuOpen && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setMenuOpen(false)} // Klick außen schließt
-                style={{
-                  position: "fixed",
-                  top: 0,
-                  left: 0,
-                  width: "100vw",
-                  height: "100vh",
-                  background: "rgba(0,0,0,0.5)",
-                  backdropFilter: "blur(5px)",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  zIndex: 9999,
-                }}
-              >
-                <motion.div
-                  initial={{ scale: 0.8 }}
-                  animate={{ scale: 1 }}
-                  exit={{ scale: 0.8 }}
-                  onClick={(e) => e.stopPropagation()} // Klick auf Menü blockiert close
-                  style={{
-                    background: "#1c1c1c",
-                    padding: 30,
-                    borderRadius: 20,
-                    minWidth: 200,
-                    textAlign: "center",
-                    color: "white",
-                  }}
-                >
-                  <button
-                    onClick={() => {
-                      logout();
-                      window.location.reload();
-                    }}
-                    style={{
-                      background: "#1db954",
-                      border: "none",
-                      borderRadius: 12,
-                      padding: "10px 20px",
-                      color: "#fff",
-                      cursor: "pointer",
-                      fontSize: "1em",
-                    }}
-                  >
-                    Neu verbinden
-                  </button>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
       </div>
     </div>
   );
