@@ -174,7 +174,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
       backgroundImage: `url(${track.album.images[0].url})`,
       backgroundSize: "cover",
       backgroundPosition: "center",
-      filter: "blur(15px)",
+      filter: `blur(${designSettings.blur}px)`,
       transform: "scale(1.0)",
       opacity: 0.3,
       position: "absolute",
@@ -200,6 +200,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
     }}
   />
 )}
+
 
 
       <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
@@ -483,67 +484,59 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
       />
 
       {/* 2. Hintergrund */}
-      <label style={{ display: "block", marginBottom: 8 }}>
-        Hintergrund:
-      </label>
-      <button
-        onClick={() =>
-          setDesignSettings((prev) => ({
-            ...prev,
-            useCoverBackground: !prev.useCoverBackground,
-          }))
-        }
-        style={{
-          width: "100%",
-          background: "linear-gradient(135deg, #1d1c3b 0%, #372758 100%)",
-          border: "none",
-          borderRadius: 10,
-          padding: "8px 0",
-          color: "white",
-          marginBottom: 12,
-          cursor: "pointer",
-        }}
-      >
-        {designSettings.useCoverBackground ? "Cover-Hintergrund" : "Farbverlauf"}
-      </button>
+      <label style={{ display: "block", marginBottom: 8 }}>Hintergrund wählen:</label>
+<button
+  onClick={() => setBackgroundType("cover")}
+  style={{
+    width: "100%",
+    padding: "8px 0",
+    marginBottom: 10,
+    borderRadius: 10,
+    color: "white",
+    border: "none",
+    background: backgroundType === "cover" ? "#1db954" : "#555",
+    cursor: "pointer",
+  }}
+>
+  Cover-Hintergrund
+</button>
 
-      {/* 3. Farbverlauf-Auswahl */}
-      {!designSettings.useCoverBackground && (
-        <div style={{ marginBottom: 12 }}>
-          <label style={{ display: "block", marginBottom: 8 }}>
-            Farbverlauf wählen:
-          </label>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button
-              onClick={() =>
-                setGradientBg({ start: "#1d1c3b", end: "#372758" })
-              }
-              style={{
-                flex: 1,
-                height: 30,
-                borderRadius: 6,
-                border: "none",
-                cursor: "pointer",
-                background: "linear-gradient(135deg, #1d1c3b 0%, #372758 100%)",
-              }}
-            />
-            <button
-              onClick={() =>
-                setGradientBg({ start: "#3d4068", end: "#000000" })
-              }
-              style={{
-                flex: 1,
-                height: 30,
-                borderRadius: 6,
-                border: "none",
-                cursor: "pointer",
-                background: "linear-gradient(135deg, #3d4068 0%, #000000 100%)",
-              }}
-            />
-            {/* Weitere Farbverläufe können hier hinzugefügt werden */}
-          </div>
-        </div>
-      )}
+<button
+  onClick={() => setBackgroundType("gradient")}
+  style={{
+    width: "100%",
+    padding: "8px 0",
+    marginBottom: 12,
+    borderRadius: 10,
+    color: "white",
+    border: "none",
+    background: backgroundType === "gradient" ? "#1db954" : "#555",
+    cursor: "pointer",
+  }}
+>
+  Farbverlauf
+</button>
+
+{backgroundType === "gradient" && (
+  <>
+    <label>Startfarbe:</label>
+    <input
+      type="color"
+      value={gradientBg.start}
+      onChange={(e) => setGradientBg({ ...gradientBg, start: e.target.value })}
+      style={{ width: "100%", marginBottom: 8 }}
+    />
+
+    <label>Endfarbe:</label>
+    <input
+      type="color"
+      value={gradientBg.end}
+      onChange={(e) => setGradientBg({ ...gradientBg, end: e.target.value })}
+      style={{ width: "100%", marginBottom: 12 }}
+    />
+  </>
+)}
+
 
       {/* 4. Cover-Form */}
       <label style={{ display: "block", marginBottom: 8 }}>Cover-Form:</label>
