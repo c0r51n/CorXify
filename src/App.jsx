@@ -413,7 +413,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
             window.location.reload();
           }}
           style={{
-            background: "linear-gradient(90deg, #3d4068 0%, #000000 100%)",
+            background: "linear-gradient(90deg, #1d1c3b 0%, #372758 100%)",
             border: "none",
             borderRadius: 12,
             padding: "10px 20px",
@@ -429,7 +429,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
         <button
           onClick={() => setShowDesignMenu((prev) => !prev)}
           style={{
-            background: "linear-gradient(90deg, #3d4068 0%, #000000 100%)",
+            background: "linear-gradient(90deg, #1d1c3b 0%, #372758 100%)",
             border: "none",
             borderRadius: 12,
             padding: "10px 20px",
@@ -485,7 +485,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
                 }
                 style={{
                   width: "100%",
-                  background: "#2b2b2b",
+                  background: "linear-gradient(90deg, #1d1c3b 0%, #372758 100%)",
                   border: "none",
                   borderRadius: 10,
                   padding: "8px 0",
@@ -512,7 +512,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
                 }
                 style={{
                   width: "100%",
-                  background: "#2b2b2b",
+                  background: "linear-gradient(90deg, #1d1c3b 0%, #372758 100%)",
                   border: "none",
                   borderRadius: 10,
                   padding: "8px 0",
