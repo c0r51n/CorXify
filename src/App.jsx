@@ -33,30 +33,38 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef();
 
+  // --- Verbindung + Track laden ---
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
 
-    if (!getAccessToken() && code) {
-      fetchAccessToken(code).then(() => {
+    async function initAuth() {
+      if (!getAccessToken() && code) {
+        await fetchAccessToken(code);
         window.history.replaceState({}, document.title, "/");
-        loadCurrentTrack();
-      });
-    } else if (getAccessToken()) {
-      loadCurrentTrack();
+      }
+      if (getAccessToken()) loadCurrentTrack();
+      else {
+        // Wenn kein Token, automatisch versuchen, URL zu holen
+        const url = await getAuthorizationUrl();
+        window.location.href = url;
+      }
     }
+
+    initAuth();
 
     const interval = setInterval(() => {
       if (getAccessToken()) loadCurrentTrack();
     }, 1000);
 
-    // Klick außerhalb für Menü schließen
+    // Menü außerhalb schließen
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setMenuOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
+
     return () => {
       clearInterval(interval);
       document.removeEventListener("mousedown", handleClickOutside);
@@ -98,11 +106,6 @@ function App() {
         await saveTrack(track.id);
         setIsLiked(true);
       }
-
-      setTimeout(async () => {
-        const saved = await checkIfTrackIsSaved(track.id);
-        setIsLiked(saved);
-      }, 3500);
     } catch (err) {
       console.error("Fehler beim Liken:", err);
     }
@@ -172,24 +175,7 @@ function App() {
       )}
 
       <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
-        {!getAccessToken() ? (
-          <button
-            onClick={async () =>
-              (window.location.href = await getAuthorizationUrl())
-            }
-            style={{
-              background: "#1db954",
-              color: "#fff",
-              border: "none",
-              borderRadius: 50,
-              padding: "10px 20px",
-              fontSize: "1em",
-              cursor: "pointer",
-            }}
-          >
-            Mit Spotify verbinden
-          </button>
-        ) : track ? (
+        {track ? (
           <>
             <img
               src={track.album.images[0].url}
@@ -207,27 +193,48 @@ function App() {
 
             {/* Progressbar */}
             <div style={{ width: "90%", margin: "15px auto" }}>
-              <input
-                type="range"
-                value={progressMs}
-                max={track.duration_ms}
-                onChange={handleSeek}
+              <div
                 style={{
-                  width: "100%",
+                  position: "relative",
                   height: 6,
                   borderRadius: 10,
-                  appearance: "none",
-                  background: "#555",
-                  accentColor: "white",
-                  cursor: "pointer",
+                  background: "#444",
                 }}
-              />
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    height: 6,
+                    borderRadius: 10,
+                    background: "white",
+                    width: `${
+                      (progressMs / track.duration_ms) * 100 || 0
+                    }%`,
+                  }}
+                />
+                <input
+                  type="range"
+                  value={progressMs}
+                  max={track.duration_ms}
+                  onChange={handleSeek}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: 6,
+                    opacity: 0,
+                    cursor: "pointer",
+                  }}
+                />
+              </div>
               <div
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
                   fontSize: "0.9em",
                   opacity: 0.8,
+                  marginTop: 4,
                 }}
               >
                 <span>{formatTime(progressMs)}</span>
@@ -300,10 +307,16 @@ function App() {
                   fontSize: "1.8em",
                   color: isLiked ? "red" : "white",
                 }}
-                animate={{ scale: isLiked ? [1, 1.3, 1] : 1 }}
+                animate={{
+                  scale: isLiked ? [1, 1.3, 1] : [1, 0.8, 1],
+                }}
                 transition={{ duration: 0.3 }}
               >
-                <Heart fill={isLiked ? "red" : "none"} color={isLiked ? "red" : "white"} size={36} />
+                <Heart
+                  fill={isLiked ? "red" : "none"}
+                  color={isLiked ? "red" : "white"}
+                  size={36}
+                />
               </motion.button>
             </div>
           </>
@@ -328,9 +341,10 @@ function App() {
           <AnimatePresence>
             {menuOpen && (
               <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setMenuOpen(false)} // Klick außen schließt
                 style={{
                   position: "fixed",
                   top: 0,
@@ -349,6 +363,7 @@ function App() {
                   initial={{ scale: 0.8 }}
                   animate={{ scale: 1 }}
                   exit={{ scale: 0.8 }}
+                  onClick={(e) => e.stopPropagation()} // Klick auf Menü blockiert close
                   style={{
                     background: "#1c1c1c",
                     padding: 30,
