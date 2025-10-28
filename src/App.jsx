@@ -493,7 +493,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
     borderRadius: 10,
     color: "white",
     border: "none",
-    background: backgroundType === "cover" ? "#1db954" : "#555",
+    background: backgroundType === "cover" ? "#1d1c3b" : "#372758",
     cursor: "pointer",
   }}
 >
@@ -509,7 +509,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
     borderRadius: 10,
     color: "white",
     border: "none",
-    background: backgroundType === "gradient" ? "#1db954" : "#555",
+    background: backgroundType === "gradient" ? "#1d1c3b" : "#372758",
     cursor: "pointer",
   }}
 >
