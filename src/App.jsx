@@ -408,7 +408,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
         exit={{ scale: 0.8, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "linear-gradient(315deg, #1d1c3b 0%, #372758 100%)",
+          background: "linear-gradient(135deg, #1d1c3b 0%, #372758 100%)",
           padding: 30,
           borderRadius: 20,
           minWidth: 240,
