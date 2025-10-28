@@ -548,7 +548,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
         }
         style={{
           width: "100%",
-          background: "linear-gradient(315deg, #1d1c3b 0%, #372758 100%)",
+          background: "#1d1c3b",
           border: "none",
           borderRadius: 10,
           padding: "8px 0",
