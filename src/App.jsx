@@ -479,7 +479,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
             blur: Number(e.target.value),
           })
         }
-        style={{ width: "100%", marginBottom: 12 }}
+        style={{ width: "100%", marginBottom: 12, background: "#1d1c3b"}}
       />
 
       {/* 2. Hintergrund */}
