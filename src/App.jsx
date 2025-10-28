@@ -221,7 +221,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
             </p>
 
             {/* Progressbar */}
-<div style={{ width: "90vw", maxWidth: "1000px", margin: "15px auto" }}>
+<div style={{ width: "85vw", maxWidth: "1200px", margin: "15px auto" }}>
   <div
     style={{
       position: "relative",
