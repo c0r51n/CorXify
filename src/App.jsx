@@ -21,7 +21,7 @@ import {
   SkipBack,
   SkipForward,
   Heart,
-  MoreVertical,
+  MoreVertical, Speaker, Car, Headphones, Monitor, Smartphone, Tablet, Tv
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -44,6 +44,7 @@ const [gradientBg, setGradientBg] = useState({ start: "#3a3d62", end: "#000000" 
   coverShape: "rounded" // oder "circle"
 });
 const [showDesignMenu, setShowDesignMenu] = useState(false);
+const [device, setDevice] = useState(null);
 
 
   // --- Verbindung + Track laden ---
@@ -68,6 +69,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
 
     const interval = setInterval(() => {
       if (getAccessToken()) loadCurrentTrack();
+      if (getAccessToken()) fetchDevice();
     }, 1000);
 
     // Menü außerhalb schließen
@@ -98,6 +100,24 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
       console.error(err);
     }
   }
+
+  async function fetchDevice() {
+  try {
+    const res = await fetch("https://api.spotify.com/v1/me/player/devices", {
+      headers: {
+        Authorization: "Bearer " + getAccessToken(),
+      },
+    });
+    const data = await res.json();
+    if (data && data.devices && data.devices.length > 0) {
+      const activeDevice = data.devices.find((d) => d.is_active);
+      setDevice(activeDevice || data.devices[0]);
+    }
+  } catch (err) {
+    console.error("Fehler beim Abrufen des Geräts:", err);
+  }
+}
+
 
   async function handlePlayPause() {
     try {
@@ -566,6 +586,32 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
     </motion.div>
   )}
 </AnimatePresence>
+
+{/* Verbundenes Gerät (unten links) */}
+{device && (
+  <div
+    style={{
+      position: "fixed",
+      bottom: 10,
+      left: 15,
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      color: "#1db954",
+      fontSize: "0.9em",
+      opacity: 0.85,
+    }}
+  >
+    {device.type === "Computer" && <Monitor size={16} />}
+    {device.type === "Speaker" && <Speaker size={16} />}
+    {device.type === "Car" && <Car size={16} />}
+    {device.type === "Smartphone" && <Smartphone size={16} />}
+    {device.type === "Tablet" && <Tablet size={16} />}
+    {device.type === "TV" && <Tv size={16} />}
+    {device.type === "Headphones" && <Headphones size={16} />}
+    <span>{device.name}</span>
+  </div>
+)}
 
 </div>
 
