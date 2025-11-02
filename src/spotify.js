@@ -56,32 +56,3 @@ export async function removeTrack(trackId) {
   });
 }
 
-export async function searchSpotify(query) {
-  const token = getAccessToken();
-  const res = await fetch(
-    `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track,playlist&limit=8`,
-    {
-      headers: { Authorization: "Bearer " + token },
-    }
-  );
-  return res.json();
-}
-
-export async function playUri(uri) {
-  const token = getAccessToken();
-  await fetch(`https://api.spotify.com/v1/me/player/play`, {
-    method: "PUT",
-    headers: { Authorization: "Bearer " + token },
-    body: JSON.stringify({ uris: [uri] }),
-  });
-}
-
-export async function playPlaylist(uri) {
-  const token = getAccessToken();
-  await fetch(`https://api.spotify.com/v1/me/player/play`, {
-    method: "PUT",
-    headers: { Authorization: "Bearer " + token },
-    body: JSON.stringify({ context_uri: uri }),
-  });
-}
-

@@ -33,10 +33,6 @@ function App() {
   const [isLiked, setIsLiked] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef();
-  const [search, setSearch] = useState("");
-  const [results, setResults] = useState([]);
-  const [showSearch, setShowSearch] = useState(false);
-
 
   // Hintergrund-Typ: "cover" oder "gradient"
   const [backgroundType, setBackgroundType] = useState("cover");
@@ -301,74 +297,37 @@ function App() {
         />
       )}
 
-      <div style={{ position:"absolute", top:20, left:20, zIndex:999 }}>
-  {!showSearch && (
-    <button 
-      onClick={() => setShowSearch(true)} 
-      style={{ background:"none", border:"none", cursor:"pointer" }}
-    >
-      🔍
-    </button>
-  )}
+      <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
+        {/* Search button top-left */}
+        <button
+          onClick={() => setShowSearch(true)}
+          style={{
+            position: "fixed",
+            top: 22,
+            left: 22,
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            zIndex: 20,
+          }}
+          aria-label="Suche öffnen"
+        >
+          <Search size={24} color="white" />
+        </button>
 
-  {showSearch && (
-    <motion.div 
-      initial={{ opacity:0, y:-5 }} 
-      animate={{ opacity:1, y:0 }}
-      style={{ background:"#0008", padding:10, borderRadius:10, width:250 }}
-    >
-      <input
-        value={search}
-        onChange={async e => {
-          setSearch(e.target.value);
-          if (e.target.value.length > 1) {
-            const r = await searchSpotify(e.target.value);
-            setResults([...(r.tracks.items || []), ...(r.playlists.items || [])]);
-          } else setResults([]);
-        }}
-        placeholder="Song oder Playlist"
-        style={{
-          width:"100%", padding:8, borderRadius:6, border:"none", marginBottom:8
-        }}
-      />
-      <button onClick={() => { setShowSearch(false); setResults([]); setSearch(""); }}>
-        ✖
-      </button>
-
-      {/* Dropdown */}
-      <div style={{ background:"#111", borderRadius:8, marginTop:6, maxHeight:250, overflowY:"auto" }}>
-        {results.map(item => (
-          <motion.div
-            whileTap={{ scale:0.97 }}
-            key={item.id}
-            onClick={async () => {
-              setSearch("");
-              setShowSearch(false);
-              setResults([]);
-
-              if (item.uri.includes("playlist")) await playPlaylist(item.uri);
-              else await playUri(item.uri);
-
-              setTimeout(loadCurrentTrack, 500);
-            }}
-            style={{ padding:8, display:"flex", alignItems:"center", gap:10, cursor:"pointer" }}
-          >
-            <img 
-              src={item.images?.[0]?.url || item.album?.images?.[0]?.url} 
-              style={{ width:40, height:40, borderRadius:6 }}
+        {track ? (
+          <>
+            <img
+              src={track.album.images[0].url}
+              alt="cover"
+              width={260}
+              style={{
+                borderRadius: designSettings.coverShape === "circle" ? "50%" : 20,
+                boxShadow: "0 0 25px rgba(0,0,0,0.5)",
+              }}
             />
-            <div style={{ textAlign:"left" }}>
-              <b style={{ fontSize:14 }}>{item.name}</b>
-              <div style={{ fontSize:12, opacity:0.7 }}>
-                {item.artists ? item.artists.map(a=>a.name).join(", ") : "Playlist"}
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-    </motion.div>
-  )}
-</div>
+            <h2 style={{ marginTop: 20 }}>{track.name}</h2>
+            <p style={{ opacity: 0.8 }}>{track.artists.map((a) => a.name).join(", ")}</p>
 
             {/* Progressbar */}
             <div style={{ width: "85vw", maxWidth: "1200px", margin: "15px auto" }}>
