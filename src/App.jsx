@@ -303,8 +303,8 @@ function App() {
           onClick={() => setShowSearch(true)}
           style={{
             position: "fixed",
-            top: 16,
-            left: 16,
+            top: 20,
+            left: 20,
             background: "transparent",
             border: "none",
             cursor: "pointer",
