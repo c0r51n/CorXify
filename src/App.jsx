@@ -22,6 +22,7 @@ import {
   SkipForward,
   Heart,
   MoreVertical,
+  Search,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -32,19 +33,26 @@ function App() {
   const [isLiked, setIsLiked] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef();
-  // Hintergrund-Typ: "cover" oder "gradient"
-const [backgroundType, setBackgroundType] = useState("cover");
 
-// Farbverlauf-Farben
-const [gradientBg, setGradientBg] = useState({ start: "#3a3d62", end: "#000000" });
+  // Hintergrund-Typ: "cover" oder "gradient"
+  const [backgroundType, setBackgroundType] = useState("cover");
+
+  // Farbverlauf-Farben
+  const [gradientBg, setGradientBg] = useState({ start: "#3a3d62", end: "#000000" });
 
   const [designSettings, setDesignSettings] = useState({
-  blur: 15,
-  useCoverBackground: true,
-  coverShape: "rounded" // oder "circle"
-});
-const [showDesignMenu, setShowDesignMenu] = useState(false);
+    blur: 15,
+    useCoverBackground: true,
+    coverShape: "rounded", // oder "circle"
+  });
+  const [showDesignMenu, setShowDesignMenu] = useState(false);
 
+  /* === Search states === */
+  const [showSearch, setShowSearch] = useState(false);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const searchDebounceRef = useRef(null);
 
   // --- Verbindung + Track laden ---
   useEffect(() => {
@@ -81,6 +89,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
     return () => {
       clearInterval(interval);
       document.removeEventListener("mousedown", handleClickOutside);
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     };
   }, []);
 
@@ -93,6 +102,11 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
         setProgressMs(data.progress_ms);
         const saved = await checkIfTrackIsSaved(data.item.id);
         setIsLiked(saved);
+      } else {
+        setTrack(null);
+        setIsPlaying(false);
+        setProgressMs(0);
+        setIsLiked(false);
       }
     } catch (err) {
       console.error(err);
@@ -151,6 +165,85 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
     return `${min}:${sec.toString().padStart(2, "0")}`;
   }
 
+  /* ================= Search logic ================= */
+  useEffect(() => {
+    // Debounce search: 500ms
+    if (!query || query.trim().length === 0) {
+      setResults([]);
+      setSearchLoading(false);
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+      return;
+    }
+
+    setSearchLoading(true);
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      doSearch(query);
+    }, 500);
+
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
+
+  async function doSearch(q) {
+    const token = getAccessToken();
+    if (!token) {
+      console.warn("Kein Access Token für Suche");
+      setSearchLoading(false);
+      return;
+    }
+    try {
+      const res = await fetch(
+        `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=8`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const data = await res.json();
+      const items = (data.tracks && data.tracks.items) || [];
+      setResults(items);
+    } catch (err) {
+      console.error("Search error:", err);
+    } finally {
+      setSearchLoading(false);
+    }
+  }
+
+  // Play a searched track (uses Spotify Web API). Note: requires active device and Premium for remote play.
+  async function playSearchTrack(uri) {
+    const token = getAccessToken();
+    if (!token) {
+      console.warn("Kein Token zum Abspielen");
+      return;
+    }
+    try {
+      const res = await fetch("https://api.spotify.com/v1/me/player/play", {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ uris: [uri] }),
+      });
+
+      if (res.status === 204 || res.ok) {
+        // success - reload current track after slight delay
+        setTimeout(() => loadCurrentTrack(), 700);
+        setShowSearch(false);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        console.error("Play failed", res.status, err);
+        alert("Abspielen fehlgeschlagen — Stelle sicher, dass ein aktives Gerät vorhanden ist (Spotify App) und du Premium hast.");
+      }
+    } catch (err) {
+      console.error("Play error:", err);
+    }
+  }
+
+  /* ================= UI ================= */
+
   return (
     <div
       style={{
@@ -168,42 +261,60 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
         justifyContent: "center",
       }}
     >
+      {/* Backgrounds */}
       {track && backgroundType === "cover" && (
-  <div
-    style={{
-      backgroundImage: `url(${track.album.images[0].url})`,
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      filter: `blur(${designSettings.blur}px)`,
-      transform: "scale(1.0)",
-      opacity: 0.3,
-      position: "absolute",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      zIndex: 0,
-    }}
-  />
-)}
+        <div
+          style={{
+            backgroundImage: `url(${track.album.images[0].url})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            filter: `blur(${designSettings.blur}px)`,
+            transform: "scale(1.0)",
+            opacity: 0.3,
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            zIndex: 0,
+          }}
+        />
+      )}
 
-{backgroundType === "gradient" && (
-  <div
-    style={{
-      background: `linear-gradient(135deg, ${gradientBg.start}, ${gradientBg.end})`,
-      position: "absolute",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      zIndex: 0,
-    }}
-  />
-)}
-
-
+      {backgroundType === "gradient" && (
+        <div
+          style={{
+            background: track
+              ? `linear-gradient(135deg, ${gradientBg.start}, ${gradientBg.end})`
+              : "linear-gradient(135deg,#222,#000)",
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            zIndex: 0,
+          }}
+        />
+      )}
 
       <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
+        {/* Search button top-left */}
+        <button
+          onClick={() => setShowSearch(true)}
+          style={{
+            position: "fixed",
+            top: 16,
+            left: 16,
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            zIndex: 20,
+          }}
+          aria-label="Suche öffnen"
+        >
+          <Search size={24} color="white" />
+        </button>
+
         {track ? (
           <>
             <img
@@ -211,78 +322,75 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
               alt="cover"
               width={260}
               style={{
-  borderRadius: designSettings.coverShape === "circle" ? "50%" : 20,
-  boxShadow: "0 0 25px rgba(0,0,0,0.5)",
-}}
+                borderRadius: designSettings.coverShape === "circle" ? "50%" : 20,
+                boxShadow: "0 0 25px rgba(0,0,0,0.5)",
+              }}
             />
             <h2 style={{ marginTop: 20 }}>{track.name}</h2>
-            <p style={{ opacity: 0.8 }}>
-              {track.artists.map((a) => a.name).join(", ")}
-            </p>
+            <p style={{ opacity: 0.8 }}>{track.artists.map((a) => a.name).join(", ")}</p>
 
             {/* Progressbar */}
-<div style={{ width: "85vw", maxWidth: "1200px", margin: "15px auto" }}>
-  <div
-    style={{
-      position: "relative",
-      height: 6,
-      borderRadius: 10,
-      background: "#444",
-    }}
-  >
-    <div
-      style={{
-        position: "absolute",
-        height: 6,
-        borderRadius: 10,
-        background: "white",
-        width: `${(progressMs / track.duration_ms) * 100 || 0}%`,
-      }}
-    />
-    {/* weißer Kreis-Punkt */}
-    <div
-      style={{
-        position: "absolute",
-        top: "50%",
-        left: `${(progressMs / track.duration_ms) * 100 || 0}%`,
-        transform: "translate(-50%, -50%)",
-        width: 14,
-        height: 14,
-        background: "white",
-        borderRadius: "50%",
-        pointerEvents: "none",
-      }}
-    />
-    <input
-      type="range"
-      value={progressMs}
-      max={track.duration_ms}
-      onChange={handleSeek}
-      style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: 6,
-        opacity: 0,
-        cursor: "pointer",
-      }}
-    />
-  </div>
-  <div
-    style={{
-      display: "flex",
-      justifyContent: "space-between",
-      fontSize: "0.9em",
-      opacity: 0.8,
-      marginTop: 4,
-    }}
-  >
-    <span>{formatTime(progressMs)}</span>
-    <span>{formatTime(track.duration_ms)}</span>
-  </div>
-</div>
-
+            <div style={{ width: "85vw", maxWidth: "1200px", margin: "15px auto" }}>
+              <div
+                style={{
+                  position: "relative",
+                  height: 6,
+                  borderRadius: 10,
+                  background: "#444",
+                }}
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    height: 6,
+                    borderRadius: 10,
+                    background: "white",
+                    width: `${(progressMs / track.duration_ms) * 100 || 0}%`,
+                  }}
+                />
+                {/* weißer Kreis-Punkt */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "50%",
+                    left: `${(progressMs / track.duration_ms) * 100 || 0}%`,
+                    transform: "translate(-50%, -50%)",
+                    width: 14,
+                    height: 14,
+                    background: "white",
+                    borderRadius: "50%",
+                    pointerEvents: "none",
+                  }}
+                />
+                <input
+                  type="range"
+                  value={progressMs}
+                  max={track.duration_ms}
+                  onChange={handleSeek}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: 6,
+                    opacity: 0,
+                    cursor: "pointer",
+                  }}
+                />
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontSize: "0.9em",
+                  opacity: 0.8,
+                  marginTop: 4,
+                }}
+              >
+                <span>{formatTime(progressMs)}</span>
+                <span>{formatTime(track.duration_ms)}</span>
+              </div>
+            </div>
 
             {/* Buttons */}
             <div
@@ -294,15 +402,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
                 gap: 50,
               }}
             >
-              <button
-                onClick={previousTrack}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "white",
-                }}
-              >
+              <button onClick={previousTrack} style={{ background: "none", border: "none", cursor: "pointer", color: "white" }}>
                 <SkipBack size={36} />
               </button>
 
@@ -325,15 +425,7 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
                 {isPlaying ? <Pause size={44} /> : <Play size={44} />}
               </button>
 
-              <button
-                onClick={nextTrack}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "white",
-                }}
-              >
+              <button onClick={nextTrack} style={{ background: "none", border: "none", cursor: "pointer", color: "white" }}>
                 <SkipForward size={36} />
               </button>
             </div>
@@ -349,16 +441,10 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
                   fontSize: "1.8em",
                   color: isLiked ? "red" : "white",
                 }}
-                animate={{
-                  scale: isLiked ? [1, 1.3, 1] : [1, 0.8, 1],
-                }}
+                animate={{ scale: isLiked ? [1, 1.3, 1] : [1, 0.8, 1] }}
                 transition={{ duration: 0.3 }}
               >
-                <Heart
-                  fill={isLiked ? "red" : "none"}
-                  color={isLiked ? "red" : "white"}
-                  size={36}
-                />
+                <Heart fill={isLiked ? "red" : "none"} color={isLiked ? "red" : "white"} size={36} />
               </motion.button>
             </div>
           </>
@@ -366,208 +452,321 @@ const [showDesignMenu, setShowDesignMenu] = useState(false);
           <p>--</p>
         )}
 
-{/* Drei-Punkte Menü */}
-<div style={{ position: "fixed", top: 20, right: 20 }} ref={menuRef}>
-  <button
-    onClick={() => setMenuOpen((prev) => !prev)}
-    style={{
-      background: "none",
-      border: "none",
-      cursor: "pointer",
-      color: "white",
-      padding: 6,
-    }}
-  >
-    <MoreVertical size={22} /> {/* kleiner gemacht */}
-  </button>
+        {/* Drei-Punkte Menü */}
+        <div style={{ position: "fixed", top: 20, right: 20 }} ref={menuRef}>
+          <button
+            onClick={() => setMenuOpen((prev) => !prev)}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "white",
+              padding: 6,
+            }}
+          >
+            <MoreVertical size={22} />
+          </button>
 
-  <AnimatePresence>
-  {menuOpen && (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={() => setMenuOpen(false)} // Klick außen schließt Menü
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100vw",
-        height: "100vh",
-        background: "rgba(0,0,0,0.5)",
-        backdropFilter: "blur(5px)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        zIndex: 9999,
-      }}
-    >
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.8, opacity: 0 }}
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: "linear-gradient(135deg, #1d1c3b 0%, #372758 100%)",
-          padding: 30,
-          borderRadius: 20,
-          minWidth: 240,
-          textAlign: "center",
-          color: "white",
-        }}
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-  <button
-    onClick={() => { logout(); window.location.reload(); }}
-    style={{
-      background: "linear-gradient(315deg, #1d1c3b 0%, #372758 100%)",
-      border: "none",
-      borderRadius: 12,
-      padding: "10px 20px",
-      color: "#fff",
-      cursor: "pointer",
-      fontSize: "1em",
-    }}
-  >
-    Neu verbinden
-  </button>
+          <AnimatePresence>
+            {menuOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setMenuOpen(false)} // Klick außen schließt Menü
+                style={{
+                  position: "fixed",
+                  top: 0,
+                  left: 0,
+                  width: "100vw",
+                  height: "100vh",
+                  background: "rgba(0,0,0,0.5)",
+                  backdropFilter: "blur(5px)",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  zIndex: 9999,
+                }}
+              >
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.8, opacity: 0 }}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    background: "linear-gradient(135deg, #1d1c3b 0%, #372758 100%)",
+                    padding: 30,
+                    borderRadius: 20,
+                    minWidth: 240,
+                    textAlign: "center",
+                    color: "white",
+                  }}
+                >
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    <button
+                      onClick={() => {
+                        logout();
+                        window.location.reload();
+                      }}
+                      style={{
+                        background: "linear-gradient(315deg, #1d1c3b 0%, #372758 100%)",
+                        border: "none",
+                        borderRadius: 12,
+                        padding: "10px 20px",
+                        color: "#fff",
+                        cursor: "pointer",
+                        fontSize: "1em",
+                      }}
+                    >
+                      Neu verbinden
+                    </button>
 
-  <button
-    onClick={() => setShowDesignMenu(prev => !prev)}
-    style={{
-      background: "linear-gradient(315deg, #1d1c3b 0%, #372758 100%)",
-      border: "none",
-      borderRadius: 12,
-      padding: "10px 20px",
-      color: "#fff",
-      cursor: "pointer",
-      fontSize: "1em",
-    }}
-  >
-    Design
-  </button>
-</div>
+                    <button
+                      onClick={() => setShowDesignMenu((prev) => !prev)}
+                      style={{
+                        background: "linear-gradient(315deg, #1d1c3b 0%, #372758 100%)",
+                        border: "none",
+                        borderRadius: 12,
+                        padding: "10px 20px",
+                        color: "#fff",
+                        cursor: "pointer",
+                        fontSize: "1em",
+                      }}
+                    >
+                      Design
+                    </button>
+                  </div>
 
+                  {/* Design Settings Panel */}
+                  <AnimatePresence>
+                    {showDesignMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        style={{
+                          marginTop: 20,
+                          background: "rgba(255,255,255,0.05)",
+                          borderRadius: 12,
+                          padding: 15,
+                          textAlign: "left",
+                        }}
+                      >
+                        {/* 1. Blur */}
+                        <label style={{ display: "block", marginBottom: 8 }}>
+                          Hintergrund-Unschärfe: {designSettings.blur}px
+                        </label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="30"
+                          value={designSettings.blur}
+                          onChange={(e) =>
+                            setDesignSettings({
+                              ...designSettings,
+                              blur: Number(e.target.value),
+                            })
+                          }
+                          style={{ width: "100%", marginBottom: 12, background: "#1d1c3b" }}
+                        />
 
-        {/* Design Settings Panel */}
-<AnimatePresence>
-  {showDesignMenu && (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      style={{
-        marginTop: 20,
-        background: "rgba(255,255,255,0.05)",
-        borderRadius: 12,
-        padding: 15,
-        textAlign: "left",
-      }}
-    >
-      {/* 1. Blur */}
-      <label style={{ display: "block", marginBottom: 8 }}>
-        Hintergrund-Unschärfe: {designSettings.blur}px
-      </label>
-      <input
-        type="range"
-        min="0"
-        max="30"
-        value={designSettings.blur}
-        onChange={(e) =>
-          setDesignSettings({
-            ...designSettings,
-            blur: Number(e.target.value),
-          })
-        }
-        style={{ width: "100%", marginBottom: 12, background: "#1d1c3b"}}
-      />
+                        {/* 2. Hintergrund */}
+                        <label style={{ display: "block", marginBottom: 8 }}>Hintergrund wählen:</label>
+                        <button
+                          onClick={() => setBackgroundType("cover")}
+                          style={{
+                            width: "100%",
+                            padding: "8px 0",
+                            marginBottom: 10,
+                            borderRadius: 10,
+                            color: "white",
+                            border: "none",
+                            background: backgroundType === "cover" ? "#1d1c3b" : "#372758",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Cover-Hintergrund
+                        </button>
 
-      {/* 2. Hintergrund */}
-      <label style={{ display: "block", marginBottom: 8 }}>Hintergrund wählen:</label>
-<button
-  onClick={() => setBackgroundType("cover")}
-  style={{
-    width: "100%",
-    padding: "8px 0",
-    marginBottom: 10,
-    borderRadius: 10,
-    color: "white",
-    border: "none",
-    background: backgroundType === "cover" ? "#1d1c3b" : "#372758",
-    cursor: "pointer",
-  }}
->
-  Cover-Hintergrund
-</button>
+                        <button
+                          onClick={() => setBackgroundType("gradient")}
+                          style={{
+                            width: "100%",
+                            padding: "8px 0",
+                            marginBottom: 12,
+                            borderRadius: 10,
+                            color: "white",
+                            border: "none",
+                            background: backgroundType === "gradient" ? "#1d1c3b" : "#372758",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Farbverlauf
+                        </button>
 
-<button
-  onClick={() => setBackgroundType("gradient")}
-  style={{
-    width: "100%",
-    padding: "8px 0",
-    marginBottom: 12,
-    borderRadius: 10,
-    color: "white",
-    border: "none",
-    background: backgroundType === "gradient" ? "#1d1c3b" : "#372758",
-    cursor: "pointer",
-  }}
->
-  Farbverlauf
-</button>
+                        {backgroundType === "gradient" && (
+                          <div style={{ marginBottom: 12 }}>
+                            <label style={{ display: "block", marginBottom: 8 }}>Farbverlauf wählen:</label>
+                            <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                              <input
+                                type="color"
+                                value={gradientBg.start}
+                                onChange={e => setGradientBg({ ...gradientBg, start: e.target.value })}
+                                style={{ flex: 1, height: 36, borderRadius: 8, border: "none", cursor: "pointer" }}
+                              />
+                              <input
+                                type="color"
+                                value={gradientBg.end}
+                                onChange={e => setGradientBg({ ...gradientBg, end: e.target.value })}
+                                style={{ flex: 1, height: 36, borderRadius: 8, border: "none", cursor: "pointer" }}
+                              />
+                            </div>
+                          </div>
+                        )}
 
-{backgroundType === "gradient" && (
-  <div style={{ marginBottom: 12 }}>
-    <label style={{ display: "block", marginBottom: 8 }}>Farbverlauf wählen:</label>
-    <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-      <input
-        type="color"
-        value={gradientBg.start}
-        onChange={e => setGradientBg({ ...gradientBg, start: e.target.value })}
-        style={{ flex: 1, height: 36, borderRadius: 8, border: "none", cursor: "pointer" }}
-      />
-      <input
-        type="color"
-        value={gradientBg.end}
-        onChange={e => setGradientBg({ ...gradientBg, end: e.target.value })}
-        style={{ flex: 1, height: 36, borderRadius: 8, border: "none", cursor: "pointer" }}
-      />
-    </div>
-  </div>
-)}
+                        {/* 4. Cover-Form */}
+                        <label style={{ display: "block", marginBottom: 8 }}>Cover-Form:</label>
+                        <button
+                          onClick={() =>
+                            setDesignSettings((prev) => ({
+                              ...prev,
+                              coverShape: prev.coverShape === "rounded" ? "circle" : "rounded",
+                            }))
+                          }
+                          style={{
+                            width: "100%",
+                            background: "#1d1c3b",
+                            border: "none",
+                            borderRadius: 10,
+                            padding: "8px 0",
+                            color: "white",
+                            cursor: "pointer",
+                          }}
+                        >
+                          {designSettings.coverShape === "rounded" ? "Abgerundet" : "Rund"}
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
+        {/* Search Modal */}
+        <AnimatePresence>
+          {showSearch && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                width: "100vw",
+                height: "100vh",
+                background: "rgba(0,0,0,0.6)",
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "center",
+                paddingTop: 80,
+                zIndex: 60,
+              }}
+              onClick={() => setShowSearch(false)}
+            >
+              <motion.div
+                initial={{ y: -10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: -10, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  width: "92vw",
+                  maxWidth: 800,
+                  background: "rgba(20,20,20,0.95)",
+                  borderRadius: 12,
+                  padding: 14,
+                  color: "white",
+                  boxShadow: "0 8px 30px rgba(0,0,0,0.6)",
+                }}
+              >
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <Search size={18} />
+                  <input
+                    autoFocus
+                    placeholder="Suche nach Titel, Künstler oder Album..."
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    style={{
+                      flex: 1,
+                      background: "transparent",
+                      border: "none",
+                      outline: "none",
+                      color: "white",
+                      fontSize: 16,
+                      padding: "8px 6px",
+                    }}
+                  />
+                  <button
+                    onClick={() => {
+                      setQuery("");
+                      setResults([]);
+                    }}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#888",
+                      cursor: "pointer",
+                      padding: 6,
+                    }}
+                  >
+                    Clear
+                  </button>
+                </div>
 
-      {/* 4. Cover-Form */}
-      <label style={{ display: "block", marginBottom: 8 }}>Cover-Form:</label>
-      <button
-        onClick={() =>
-          setDesignSettings((prev) => ({
-            ...prev,
-            coverShape: prev.coverShape === "rounded" ? "circle" : "rounded",
-          }))
-        }
-        style={{
-          width: "100%",
-          background: "#1d1c3b",
-          border: "none",
-          borderRadius: 10,
-          padding: "8px 0",
-          color: "white",
-          cursor: "pointer",
-        }}
-      >
-        {designSettings.coverShape === "rounded" ? "Abgerundet" : "Rund"}
-      </button>
-    </motion.div>
-  )}
-</AnimatePresence>
+                <div style={{ marginTop: 12 }}>
+                  {searchLoading && <div style={{ opacity: 0.8 }}>Suche...</div>}
 
-      </motion.div>
-    </motion.div>
-  )}
-</AnimatePresence>
+                  {!searchLoading && results.length === 0 && query.length > 0 && (
+                    <div style={{ opacity: 0.8 }}>Keine Ergebnisse</div>
+                  )}
 
-</div>
+                  <div style={{ display: "grid", gap: 8, marginTop: 6 }}>
+                    <AnimatePresence>
+                      {results.map((r) => (
+                        <motion.div
+                          key={r.id}
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 6 }}
+                          whileHover={{ scale: 1.01 }}
+                          onClick={() => playSearchTrack(r.uri)}
+                          style={{
+                            display: "flex",
+                            gap: 12,
+                            alignItems: "center",
+                            padding: 8,
+                            borderRadius: 8,
+                            cursor: "pointer",
+                            background: "rgba(255,255,255,0.02)",
+                          }}
+                        >
+                          <img src={r.album.images[2]?.url || r.album.images[0]?.url} alt="" style={{ width: 56, height: 56, borderRadius: 8 }} />
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 600 }}>{r.name}</div>
+                            <div style={{ opacity: 0.7, fontSize: 13 }}>{r.artists.map(a => a.name).join(", ")}</div>
+                          </div>
+                          <div style={{ opacity: 0.6, fontSize: 12 }}>{formatTime(r.duration_ms)}</div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       </div>
     </div>
