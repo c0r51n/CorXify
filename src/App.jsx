@@ -33,6 +33,8 @@ function App() {
   const [isLiked, setIsLiked] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef();
+  const [direction, setDirection] = useState(1); // 1 = vorwärts, -1 = rückwärts
+
 
   // Hintergrund-Typ: "cover" oder "gradient"
   const [backgroundType, setBackgroundType] = useState("cover");
@@ -137,6 +139,19 @@ function App() {
       console.error("Fehler beim Liken:", err);
     }
   }
+
+  async function handleNextTrack() {
+  setDirection(1);
+  await nextTrack();
+  loadCurrentTrack();
+}
+
+async function handlePreviousTrack() {
+  setDirection(-1);
+  await previousTrack();
+  loadCurrentTrack();
+}
+
 
   async function handleSeek(event) {
     if (!track) return;
@@ -319,9 +334,9 @@ function App() {
   {track ? (
     <motion.div
       key={track.id}
-      initial={{ opacity: 0, x: 150 }}
+      initial={{ opacity: 0, x: direction * 150 }}
       animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -150 }}
+      exit={{ opacity: 0, x: direction * -150 }}
       transition={{ duration: 0.7, ease: [0.25, 0.1, 0.25, 1] }}
     >
       <img
