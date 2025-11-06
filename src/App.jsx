@@ -322,7 +322,7 @@ function App() {
       initial={{ opacity: 0, x: 150 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -150 }}
-      transition={{ duration: 0.6, ease: "easeInOut" }}
+      transition={{ duration: 0.7, ease: [0.25, 0.1, 0.25, 1] }}
     >
       <img
         src={track.album.images[0].url}
