@@ -461,6 +461,7 @@ function App() {
         ) : (
           <p>--</p>
         )}
+        </AnimatePresence>
 
         {/* Drei-Punkte Menü */}
         <div style={{ position: "fixed", top: 20, right: 20 }} ref={menuRef}>
