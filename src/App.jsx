@@ -315,19 +315,29 @@ function App() {
           <Search size={24} color="white" />
         </button>
 
-        {track ? (
-          <>
-            <img
-              src={track.album.images[0].url}
-              alt="cover"
-              width={260}
-              style={{
-                borderRadius: designSettings.coverShape === "circle" ? "50%" : 20,
-                boxShadow: "0 0 25px rgba(0,0,0,0.5)",
-              }}
-            />
-            <h2 style={{ marginTop: 20 }}>{track.name}</h2>
-            <p style={{ opacity: 0.8 }}>{track.artists.map((a) => a.name).join(", ")}</p>
+        <AnimatePresence mode="wait">
+  {track ? (
+    <motion.div
+      key={track.id}
+      initial={{ opacity: 0, x: 150 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -150 }}
+      transition={{ duration: 0.6, ease: "easeInOut" }}
+    >
+      <img
+        src={track.album.images[0].url}
+        alt="cover"
+        width={260}
+        style={{
+          borderRadius: designSettings.coverShape === "circle" ? "50%" : 20,
+          boxShadow: "0 0 25px rgba(0,0,0,0.5)",
+        }}
+      />
+      <h2 style={{ marginTop: 20 }}>{track.name}</h2>
+      <p style={{ opacity: 0.8 }}>
+        {track.artists.map((a) => a.name).join(", ")}
+      </p>
+
 
             {/* Progressbar */}
             <div style={{ width: "85vw", maxWidth: "1200px", margin: "15px auto" }}>
