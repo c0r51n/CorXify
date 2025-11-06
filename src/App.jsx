@@ -315,7 +315,7 @@ function App() {
           <Search size={24} color="white" />
         </button>
 
-        <AnimatePresence mode="wait">
+  <AnimatePresence mode="wait">
   {track ? (
     <motion.div
       key={track.id}
