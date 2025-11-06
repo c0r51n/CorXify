@@ -457,7 +457,7 @@ function App() {
                 <Heart fill={isLiked ? "red" : "none"} color={isLiked ? "red" : "white"} size={36} />
               </motion.button>
             </div>
-          </>
+          </motion.div>
         ) : (
           <p>--</p>
         )}
